@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+
+gem 'dashing'
+gem 'execjs'  
+gem 'therubyracer', :platforms => :ruby
+

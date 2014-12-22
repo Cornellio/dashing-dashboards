@@ -1,0 +1,25 @@
+---
+buzzwords: |+
+  data: {"items":[{"label":"Precise Pangolin","value":9},{"label":"Lucid Lynx","value":11},{"label":"Natty Narwhal","value":9},{"label":"Jaunty Jackalope","value":10},{"label":"Edgy Eft","value":8},{"label":"Raring Ringtail","value":18},{"label":"Maverick Meerkat","value":13},{"label":"Hardy Heron","value":11},{"label":"Karmic Koala","value":5},{"label":"Utopic Unicorn","value":12},{"label":"Intrepid Ibex","value":10},{"label":"Saucy Salamander","value":6},{"label":"Feisty Fawn","value":10},{"label":"Oneiric Ocelot","value":8},{"label":"Trusty Tahr","value":13},{"label":"Dapper Drake","value":10},{"label":"Quantal Quetzal","value":10}],"id":"buzzwords","updatedAt":1419220806}
+
+valuation: |+
+  data: {"current":10,"last":89,"id":"valuation","updatedAt":1402681653}
+
+karma: |+
+  data: {"current":196319,"last":107979,"id":"karma","updatedAt":1402681653}
+
+synergy: |+
+  data: {"value":61,"id":"synergy","updatedAt":1402681653}
+
+convergence: |+
+  data: {"points":[{"x":242,"y":20},{"x":243,"y":46},{"x":244,"y":20},{"x":245,"y":38},{"x":246,"y":10},{"x":247,"y":46},{"x":248,"y":26},{"x":249,"y":28},{"x":250,"y":43},{"x":251,"y":10}],"id":"convergence","updatedAt":1402681653}
+
+sabre-sessions: |+
+  data: {"current":"","id":"sabre-sessions","updatedAt":1402684914}
+
+sabresessions: |+
+  data: {"points":[{"x":1,"y":613},{"x":2,"y":550},{"x":3,"y":611},{"x":4,"y":561},{"x":5,"y":610},{"x":6,"y":568},{"x":7,"y":627},{"x":8,"y":579},{"x":9,"y":664},{"x":10,"y":629},{"x":11,"y":643},{"x":12,"y":613},{"x":13,"y":617},{"x":14,"y":636},{"x":15,"y":605},{"x":16,"y":610},{"x":17,"y":566},{"x":18,"y":638},{"x":19,"y":570},{"x":20,"y":611},{"x":21,"y":581},{"x":22,"y":566},{"x":23,"y":548},{"x":24,"y":596}],"id":"sabresessions","updatedAt":1419218706}
+
+welcome: |+
+  data: {"text":"Hey, Pheng!","id":"welcome","updatedAt":1419028875}
+
