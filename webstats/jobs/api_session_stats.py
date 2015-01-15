@@ -9,14 +9,29 @@ import os
 import sys
 import urllib
 import json
-from pprint import pprint
+from datetime import date
+from datetime import datetime
 
 DASHING_SERVER = "http://dashing.virginam.com"
 AUTH_TOKEN = "mingle#trip"
 TARGET_WIDGET="tbd" # Need to add
 SERVER_CONNECTION = "${DASHING_SERVER}/widgets/${TARGET_WIDGET}"
 DATA_VIEW = "points"
-SESSION_HISTORY_FILE = sys.argv[0] + ".history"
+SESSION_HISTORY_FILE = sys.argv[0].strip('py') + "history"
+HEADER = ( "# Time, "
+    "tx Active Sessions, "
+    "tx Borrowed Count, "
+    "tx Closed Sessions, "
+    "tx Created Count, "
+    "tx Destroyed Count, "
+    "tx Idle Sessions, "
+    "non-tx Active Sessions, "
+    "non-tx Borrowed Count, "
+    "non-tx Closed Sessions, "
+    "non-tx Created Count, "
+    "non-tx Destroyed Count, "
+    "non-tx Idle Sessions, "
+    "non-tx Returned Count" )
 
 API_SERVER_LIST = ['wwwapidev03-sc9', 'wwwapidev05-sc9']
 DASHING_HTTP_PORT_DEV = "3030"
@@ -128,27 +143,25 @@ def get_apipoolstats(api_server_list):
 
 def save_values(stats):
 
-  '''Write sums of each stat to file.'''
+    '''Write sums of stats to file.'''
 
-  print "\nSaving Values:"
-  stats = str(stats).strip('()') + "\n" # convert integers to string and strip out ()
+    stats = str(stats).strip('()') + "\n" # convert integers to string and strip out ()
+    f = open(SESSION_HISTORY_FILE, 'a')
+    f.write(stats)
+    print "\nWriting values: ", stats
+    f.close
 
   # Get Date
-  # from datetime import date
 
   # d0 = date(2008, 8, 18)
   # d1 = date(2008, 9, 26)
   # delta = d0 - d1
   # print delta.days
 
-  # Save data to file
-  f = open(SESSION_HISTORY_FILE, 'a')
-  f.write(stats)
-  f.close
 
 
 def update_widget():
-    pass
+
 
   # echo "Sending ${#} values to ${TARGET_WIDGET} widget:  ${*}"
   # # Data points to post must match $value_len ##
@@ -178,27 +191,35 @@ def update_widget():
   #   { \"x\": 24, \"y\": ${24} } ]"
   # curl -d "{ \"auth_token\": \"${AUTH_TOKEN}\", \"${DATA_VIEW}\": ${post_data} }" ${SERVER_CONNECTION}
 
+  pass
 
 # Lookup recent values in file
 def get_recent_values():
-    pass
     # value_len = "24"
   
     # recent_values = ( tail -n ${value_len} $SESSION_HISTORY_FILE )
     # for value in $recent_values:
     #     i += 1
     #     value[i]=field[i]
+    pass
 
 
 def main():
 
+    today = date.today()
+    print datetime.combine(today, datetime.min.time())
+
+    # exit(0)
+
+    # Create/check output file for header and write it if needed
+    f = open(SESSION_HISTORY_FILE, 'r+')
+    line = f.readline()
+    if not line.startswith('#'):
+        f.write(HEADER + "\n")
+    f.close
+
     sum_stats = get_apipoolstats(API_SERVER_LIST)
     save_values(sum_stats)
-
-
-    # get_recent_values
-    # print "values: ${values[*]}"
-    # update_widget ${value[*]}
 
 
 if __name__ == '__main__':
