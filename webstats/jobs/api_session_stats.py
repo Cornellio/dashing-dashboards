@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# 
+# Get api stats from all servers
+# Add stats together
+# Write sums of stats to file
+# Push stats to dashing widgets
 
 import os
 import sys
@@ -11,65 +16,135 @@ AUTH_TOKEN = "mingle#trip"
 TARGET_WIDGET="tbd" # Need to add
 SERVER_CONNECTION = "${DASHING_SERVER}/widgets/${TARGET_WIDGET}"
 DATA_VIEW = "points"
-SESSION_HISTORY_FILE = "/home/vajobs/bin/sabre_session_history"
+SESSION_HISTORY_FILE = sys.argv[0] + ".history"
 
-# # Lookup TAM usage via api call and append to file
-# get_sabresessions () {
-#   connections=$( curl -sL https://www.virginamerica.com/api/v0/session/usage?loginKey=${LOGINKEY} | awk '{print $54}'  )
-#   echo $connections >> $SESSION_HISTORY_FILE
-# }
-
-def parse_json():
-    input = '{"status":{"status":"SUCCESS"},"response":{"transactionalPoolStats":{"createdCount":753,"destroyedCount":753,"closedSessions":753,"activeSessions":0,"idleSessions":0,"borrowedCount":753},"nonTransactionalPoolStats":{"createdCount":79,"destroyedCount":79,"closedSessions":79,"activeSessions":0,"idleSessions":0,"borrowedCount":15646,"returnedCount":15646}}}'
-
-    decoded = json.loads(input)
-
-    json_data_raw = json.dumps(decoded, sort_keys=True, indent=4)
-
-    # values from nonTransactionalPoolStats
-    non_tx_stats_active_sessions    = decoded['response']['nonTransactionalPoolStats']['activeSessions']
-    non_tx_stats_borrowed_count     = decoded['response']['nonTransactionalPoolStats']['borrowedCount']
-    non_tx_stats_closed_sessions    = decoded['response']['nonTransactionalPoolStats']['closedSessions']
-    non_tx_stats_created_count      = decoded['response']['nonTransactionalPoolStats']['createdCount']
-    non_tx_stats_destroyed_count    = decoded['response']['nonTransactionalPoolStats']['destroyedCount']
-    non_tx_stats_idle_sessions      = decoded['response']['nonTransactionalPoolStats']['idleSessions']
-    non_tx_stats_returned_count     = decoded['response']['nonTransactionalPoolStats']['returnedCount']
-
-    # values from TransactionalPoolStats
-    tx_stats_active_sessions    = decoded['response']['transactionalPoolStats']['activeSessions']
-    tx_stats_borrowed_count     = decoded['response']['transactionalPoolStats']['borrowedCount']
-    tx_stats_closed_sessions    = decoded['response']['transactionalPoolStats']['closedSessions']
-    tx_stats_created_count      = decoded['response']['transactionalPoolStats']['createdCount']
-    tx_stats_destroyed_count    = decoded['response']['transactionalPoolStats']['destroyedCount']
-    tx_stats_idle_sessions      = decoded['response']['transactionalPoolStats']['idleSessions']
+API_SERVER_LIST = ['wwwapidev03-sc9', 'wwwapidev05-sc9']
+DASHING_HTTP_PORT_DEV = "3030"
+DASHING_HTTP_PORT_PROD = "80"
 
 
-def get_apipoolstats():
-
-    api_server_list = ['wwwapidev03-sc9']
-    stats_url = '/api/v0/config/pool-stats'
+def get_apipoolstats(api_server_list):
     
+    '''
+    Cycle through all API servers, retrieve stats, add values together.
+    Return sum of stats.
+    '''
+
+    # api_server_list = ['wwwapidev03-sc9']
+    
+    sum_tx_stats_active_sessions      = 0
+    sum_tx_stats_borrowed_count       = 0
+    sum_tx_stats_closed_sessions      = 0
+    sum_tx_stats_created_count        = 0
+    sum_tx_stats_destroyed_count      = 0
+    sum_tx_stats_idle_sessions        = 0
+    sum_non_tx_stats_active_sessions  = 0
+    sum_non_tx_stats_borrowed_count   = 0
+    sum_non_tx_stats_closed_sessions  = 0
+    sum_non_tx_stats_created_count    = 0
+    sum_non_tx_stats_destroyed_count  = 0
+    sum_non_tx_stats_idle_sessions    = 0
+    sum_non_tx_stats_returned_count   = 0
+
     for server in api_server_list:
 
-        request_url = "http://" + server + stats_url
-        print "checking", request_url
-        url_handle = urllib.urlopen(request_url)
-        info = url_handle.info()
+        request_url = "http://" + server + '/api/v0/config/pool-stats'
+        print "\nchecking", request_url
 
-        # response_json = {}
-        # print 'checking', url_handle.geturl()
-        if info.gettype() == 'application/json':
-            response_json = url_handle.read()
-            
-            print "raw json response:\n", response_json + "\n"
+        # sample_json_data = '{"status":{"status":"SUCCESS"},"response":{"transactionalPoolStats":{"createdCount":753,"destroyedCount":753,"closedSessions":753,"activeSessions":0,"idleSessions":0,"borrowedCount":753},"nonTransactionalPoolStats":{"createdCount":79,"destroyedCount":79,"closedSessions":79,"activeSessions":0,"idleSessions":0,"borrowedCount":15646,"returnedCount":15646}}}'
+        urldata          = urllib.urlopen(request_url)
+        response         = urldata.read()
+        decoded          = json.loads(response)
+        response_raw     = json.dumps(decoded, sort_keys=True, indent=4)
 
-            data = json.load(response_json)
-            print "pprint json response:"
-            pprint(data)
-            # closedSessions = data["closedSessions"]
+        # values from TransactionalPoolStats
+        tx_stats_active_sessions    = decoded['response']['transactionalPoolStats']['activeSessions']
+        tx_stats_borrowed_count     = decoded['response']['transactionalPoolStats']['borrowedCount']
+        tx_stats_closed_sessions    = decoded['response']['transactionalPoolStats']['closedSessions']
+        tx_stats_created_count      = decoded['response']['transactionalPoolStats']['createdCount']
+        tx_stats_destroyed_count    = decoded['response']['transactionalPoolStats']['destroyedCount']
+        tx_stats_idle_sessions      = decoded['response']['transactionalPoolStats']['idleSessions']
 
+        # values from nonTransactionalPoolStats
+        non_tx_stats_active_sessions    = decoded['response']['nonTransactionalPoolStats']['activeSessions']
+        non_tx_stats_borrowed_count     = decoded['response']['nonTransactionalPoolStats']['borrowedCount']
+        non_tx_stats_closed_sessions    = decoded['response']['nonTransactionalPoolStats']['closedSessions']
+        non_tx_stats_created_count      = decoded['response']['nonTransactionalPoolStats']['createdCount']
+        non_tx_stats_destroyed_count    = decoded['response']['nonTransactionalPoolStats']['destroyedCount']
+        non_tx_stats_idle_sessions      = decoded['response']['nonTransactionalPoolStats']['idleSessions']
+        non_tx_stats_returned_count     = decoded['response']['nonTransactionalPoolStats']['returnedCount']
 
-        url_handle.close()
+        # Add values together
+        sum_tx_stats_active_sessions     += tx_stats_active_sessions  
+        sum_tx_stats_borrowed_count      += tx_stats_borrowed_count
+        sum_tx_stats_closed_sessions     += tx_stats_closed_sessions  
+        sum_tx_stats_created_count       += tx_stats_created_count
+        sum_tx_stats_destroyed_count     += tx_stats_destroyed_count  
+        sum_tx_stats_idle_sessions       += tx_stats_idle_sessions
+        sum_non_tx_stats_active_sessions += non_tx_stats_active_sessions      
+        sum_non_tx_stats_borrowed_count  += non_tx_stats_borrowed_count    
+        sum_non_tx_stats_closed_sessions += non_tx_stats_closed_sessions      
+        sum_non_tx_stats_created_count   += non_tx_stats_created_count    
+        sum_non_tx_stats_destroyed_count += non_tx_stats_destroyed_count      
+        sum_non_tx_stats_idle_sessions   += non_tx_stats_idle_sessions    
+        sum_non_tx_stats_returned_count  += non_tx_stats_returned_count    
+
+        # Testing output
+        print "nonTransactionalPoolStats:"
+        print "non_tx_stats_active_sessions ",  non_tx_stats_active_sessions 
+        print "non_tx_stats_borrowed_count  ",  non_tx_stats_borrowed_count  
+        print "non_tx_stats_closed_sessions ",  non_tx_stats_closed_sessions 
+        print "non_tx_stats_created_count   ",  non_tx_stats_created_count   
+        print "non_tx_stats_destroyed_count ",  non_tx_stats_destroyed_count 
+        print "non_tx_stats_idle_sessions   ",  non_tx_stats_idle_sessions   
+        print "non_tx_stats_returned_count  ",  non_tx_stats_returned_count  
+
+        print "transactionalPoolStats:"
+        print "tx_stats_active_sessions     ", tx_stats_active_sessions 
+        print "tx_stats_borrowed_count      ", tx_stats_borrowed_count
+        print "tx_stats_closed_sessions     ", tx_stats_closed_sessions
+        print "tx_stats_created_count       ", tx_stats_created_count
+        print "tx_stats_destroyed_count     ", tx_stats_destroyed_count
+        print "tx_stats_idle_sessions       ", tx_stats_idle_sessions
+
+        urldata.close()
+
+    print "\nSums:"
+    print "sum_tx_stats_active_sessions", sum_tx_stats_active_sessions
+    print "sum_tx_stats_borrowed_count", sum_tx_stats_borrowed_count
+    print "sum_tx_stats_closed_sessions", sum_tx_stats_closed_sessions
+    print "sum_tx_stats_created_count", sum_tx_stats_created_count
+    print "sum_tx_stats_destroyed_count", sum_tx_stats_destroyed_count
+    print "sum_tx_stats_idle_sessions", sum_tx_stats_idle_sessions
+    print "sum_non_tx_stats_active_sessions", sum_non_tx_stats_active_sessions
+    print "sum_non_tx_stats_borrowed_count", sum_non_tx_stats_borrowed_count
+    print "sum_non_tx_stats_closed_sessions", sum_non_tx_stats_closed_sessions
+    print "sum_non_tx_stats_created_count", sum_non_tx_stats_created_count
+    print "sum_non_tx_stats_destroyed_count", sum_non_tx_stats_destroyed_count
+    print "sum_non_tx_stats_idle_sessions", sum_non_tx_stats_idle_sessions
+    print "sum_non_tx_stats_returned_count", sum_non_tx_stats_returned_count
+
+    return sum_tx_stats_active_sessions, sum_tx_stats_borrowed_count, sum_tx_stats_closed_sessions, sum_tx_stats_created_count, sum_tx_stats_destroyed_count, sum_tx_stats_idle_sessions, sum_non_tx_stats_active_sessions, sum_non_tx_stats_borrowed_count, sum_non_tx_stats_closed_sessions, sum_non_tx_stats_created_count, sum_non_tx_stats_destroyed_count, sum_non_tx_stats_idle_sessions, sum_non_tx_stats_returned_count
+
+def save_values(stats):
+
+  '''Write sums of each stat to file.'''
+
+  print "\nSaving Values:"
+  stats = str(stats).strip('()') + "\n" # convert integers to string and strip out ()
+
+  # Get Date
+  # from datetime import date
+
+  # d0 = date(2008, 8, 18)
+  # d1 = date(2008, 9, 26)
+  # delta = d0 - d1
+  # print delta.days
+
+  # Save data to file
+  f = open(SESSION_HISTORY_FILE, 'a')
+  f.write(stats)
+  f.close
 
 
 def update_widget():
@@ -116,8 +191,11 @@ def get_recent_values():
 
 
 def main():
-    parse_json()
-    # get_apipoolstats()
+
+    sum_stats = get_apipoolstats(API_SERVER_LIST)
+    save_values(sum_stats)
+
+
     # get_recent_values
     # print "values: ${values[*]}"
     # update_widget ${value[*]}
