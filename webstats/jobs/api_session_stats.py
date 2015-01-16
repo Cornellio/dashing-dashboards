@@ -9,8 +9,9 @@ import os
 import sys
 import urllib
 import json
-from datetime import date
-from datetime import datetime
+import time
+# from datetime import date
+# from datetime import datetime
 
 DASHING_SERVER = "http://dashing.virginam.com"
 AUTH_TOKEN = "mingle#trip"
@@ -141,23 +142,22 @@ def get_apipoolstats(api_server_list):
 
     return sum_tx_stats_active_sessions, sum_tx_stats_borrowed_count, sum_tx_stats_closed_sessions, sum_tx_stats_created_count, sum_tx_stats_destroyed_count, sum_tx_stats_idle_sessions, sum_non_tx_stats_active_sessions, sum_non_tx_stats_borrowed_count, sum_non_tx_stats_closed_sessions, sum_non_tx_stats_created_count, sum_non_tx_stats_destroyed_count, sum_non_tx_stats_idle_sessions, sum_non_tx_stats_returned_count
 
+
 def save_values(stats):
 
-    '''Write sums of stats to file.'''
+    '''Write sums of all stats to file.'''
+
+    # Get datestamp
+    now_time = time.strftime("%H:%M")
+    now_date = time.strftime("%Y-%m-%d")
+    time_stamp = now_date + " " + now_time
 
     stats = str(stats).strip('()') + "\n" # convert integers to string and strip out ()
+    line = time_stamp + ", " + stats
     f = open(SESSION_HISTORY_FILE, 'a')
-    f.write(stats)
-    print "\nWriting values: ", stats
+    f.write(line)
+    print "\nWriting values:\n", line
     f.close
-
-  # Get Date
-
-  # d0 = date(2008, 8, 18)
-  # d1 = date(2008, 9, 26)
-  # delta = d0 - d1
-  # print delta.days
-
 
 
 def update_widget():
@@ -205,11 +205,6 @@ def get_recent_values():
 
 
 def main():
-
-    today = date.today()
-    print datetime.combine(today, datetime.min.time())
-
-    # exit(0)
 
     # Create/check output file for header and write it if needed
     f = open(SESSION_HISTORY_FILE, 'r+')
