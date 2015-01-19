@@ -10,8 +10,8 @@ import sys
 import urllib
 import json
 import time
-# from datetime import date
-# from datetime import datetime
+
+API_SERVER_LIST = ['wwwapidev03-sc9', 'wwwapidev05-sc9']
 
 DASHING_SERVER = "http://dashing.virginam.com"
 AUTH_TOKEN = "mingle#trip"
@@ -34,7 +34,6 @@ HEADER = ( "# Time, "
     "non-tx Idle Sessions, "
     "non-tx Returned Count" )
 
-API_SERVER_LIST = ['wwwapidev03-sc9', 'wwwapidev05-sc9']
 DASHING_HTTP_PORT_DEV = "3030"
 DASHING_HTTP_PORT_PROD = "80"
 
@@ -147,7 +146,7 @@ def save_values(stats):
 
     '''Write sums of all stats to file.'''
 
-    # Get datestamp
+    # Get timestamp
     now_time = time.strftime("%H:%M")
     now_date = time.strftime("%Y-%m-%d")
     time_stamp = now_date + " " + now_time
@@ -156,42 +155,54 @@ def save_values(stats):
     line = time_stamp + ", " + stats
     f = open(SESSION_HISTORY_FILE, 'a')
     f.write(line)
-    print "\nWriting values:\n", line
+    print "\nWriting new values: ", line
     f.close
 
 
-def update_widget():
+def transmit_values(num_of_recs, select_value):
+    
+    '''
+    * Load entire file into list
+    * Split each line into separate list elements
+    * Put tail -n into new list
+    * Send to dashboard
+    '''
 
+    f = open(SESSION_HISTORY_FILE, 'r')
+    f.readline() # skip header
+    lines = f.read()
+    lines = lines.split('\n')
+    lines_len = len(lines) - 1
+    
+    print "\nNumber of lines: ", lines_len
+    # print "\nAll recs:\n", lines
 
-  # echo "Sending ${#} values to ${TARGET_WIDGET} widget:  ${*}"
-  # # Data points to post must match $value_len ##
-  # post_data="[ { \"x\": 1, \"y\":  ${1} }, \
-  #   { \"x\": 2, \"y\":  ${2} }, \
-  #   { \"x\": 3, \"y\":  ${3} }, \
-  #   { \"x\": 4, \"y\":  ${4} }, \
-  #   { \"x\": 5, \"y\":  ${5} }, \
-  #   { \"x\": 6, \"y\":  ${6} }, \
-  #   { \"x\": 7, \"y\":  ${7} }, \
-  #   { \"x\": 8, \"y\":  ${8} }, \
-  #   { \"x\": 9, \"y\":  ${9} }, \
-  #   { \"x\": 10, \"y\": ${10} }, \
-  #   { \"x\": 11, \"y\": ${11} }, \
-  #   { \"x\": 12, \"y\": ${12} }, \
-  #   { \"x\": 13, \"y\": ${13} }, \
-  #   { \"x\": 14, \"y\": ${14} }, \
-  #   { \"x\": 15, \"y\": ${15} }, \
-  #   { \"x\": 16, \"y\": ${16} }, \
-  #   { \"x\": 17, \"y\": ${17} }, \
-  #   { \"x\": 18, \"y\": ${18} }, \
-  #   { \"x\": 19, \"y\": ${19} }, \
-  #   { \"x\": 20, \"y\": ${20} }, \
-  #   { \"x\": 21, \"y\": ${21} }, \
-  #   { \"x\": 22, \"y\": ${22} }, \
-  #   { \"x\": 23, \"y\": ${23} }, \
-  #   { \"x\": 24, \"y\": ${24} } ]"
-  # curl -d "{ \"auth_token\": \"${AUTH_TOKEN}\", \"${DATA_VIEW}\": ${post_data} }" ${SERVER_CONNECTION}
+    # rec_slice = lines[1:5]
+    lines_start = ( int(lines_len) -1 ) - int(num_of_recs)
+    lines_end = lines_len
+    # print lines_start, lines_end
+    
+    # Make line selection from which to create json string
+    lines_selected = lines[lines_start:lines_end] 
+    lines_selected_separated = '\n'.join(lines_selected) + '\n' # long listing
+    print lines_selected_separated
+    line_range = len(lines_selected)
 
-  pass
+    # Build JSON String
+    json_post_data = ''
+    for line_no in xrange(1, line_range):
+        json_post_segment = lines_selected[line_no].split(', ')[select_value]
+        
+        if line_no == 1:
+            json_post_data += '[ { "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' }, '
+        if line_no > 1 and line_no < len(lines_selected):
+            json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' }, '
+        if line_no == line_range - 1:
+            json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' } ]'
+
+    print "Sending JSON string, %s values: \n%s" % (str(num_of_recs), json_post_data)
+    f.close()
+
 
 # Lookup recent values in file
 def get_recent_values():
@@ -213,9 +224,38 @@ def main():
         f.write(HEADER + "\n")
     f.close
 
-    sum_stats = get_apipoolstats(API_SERVER_LIST)
-    save_values(sum_stats)
+    ##
+    ## Call functions
+    ##
+    
+    # sum_stats = get_apipoolstats(API_SERVER_LIST)
+    # save_values(sum_stats)
 
+    # time to push the bits to dashing
+
+    # Mapping of stat values
+    stats_map = {
+        'timestamp':                         0,
+        'sum_tx_stats_active_sessions':      1,
+        'sum_tx_stats_borrowed_count':       2,
+        'sum_tx_stats_closed_sessions':      3,
+        'sum_tx_stats_created_count':        4,
+        'sum_tx_stats_destroyed_count':      5,
+        'sum_tx_stats_idle_sessions':        6,
+        'sum_non_tx_stats_active_sessions':  7,
+        'sum_non_tx_stats_borrowed_count':   8,
+        'sum_non_tx_stats_closed_sessions':  9,
+        'sum_non_tx_stats_created_count':    10,
+        'sum_non_tx_stats_destroyed_count':  11,
+        'sum_non_tx_stats_idle_sessions':    12,
+        'sum_non_tx_stats_returned_count':   13
+      }
+
+    # Receive argument here for # of recs to get and target_value
+    NUM_OF_RECS = 5
+    target_value = "sum_non_tx_stats_returned_count"
+
+    transmit_values(NUM_OF_RECS, stats_map[target_value])
 
 if __name__ == '__main__':
     main()
