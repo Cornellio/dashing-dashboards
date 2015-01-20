@@ -5,20 +5,54 @@
 # Write sums of stats to file
 # Push stats to dashing widgets
 
+__version__ = '0.0.1'
+
 import os
 import sys
 import urllib
 import json
 import time
+import argparse
 
-API_SERVER_LIST = ['wwwapidev03-sc9', 'wwwapidev05-sc9']
+parser = argparse.ArgumentParser(description = 'Process API session statistics and push to dashing server.')
+parser.add_argument('-v', '--version', help = 'Print version', required = False, action = 'store_true')
+parser.add_argument('-a', '--authtoken', help = 'Authentication token', required = True, dest = 'authtoken')
+parser.add_argument('-r', '--servers', help ='API servers to get stats from', required = False, dest = 'servers', default = 'wwwapidev03-sc9 wwwapidev05-sc9')
+parser.add_argument('-d', '--dashinghost', help ='Dashing server to push data to', required = False, dest = 'dashing_host', default = 'dashing.virginam.com')
+parser.add_argument('-w', '--widget', help ='Widget to send data to', required = False, dest = 'widget', default = 'web_api_stats')
+parser.add_argument('-f', '--historyfile', help ='File to store stats in', required = False, dest = 'historyfile', default = sys.argv[0].strip('py') + "history")
+parser.add_argument('-e', '--environment', help ='Dashing environment', required = False, dest = 'dashing_env', default = "production")
+parser.add_argument('-n', '--records', help ='Number of records to transmit when pushing stats to dashing server. This will be the nuber of values shown on the x-axis of the graph.', required = False, dest = 'num_recs_to_transmit', default = 6)
+parser.add_argument('-s', '--stat', help = "API stat to transmit to dashing server.", required = False, dest = 'stat', default = "sum_tx_stats_active_sessions" )
 
-DASHING_SERVER = "http://dashing.virginam.com"
-AUTH_TOKEN = "mingle#trip"
-TARGET_WIDGET="tbd" # Need to add
-SERVER_CONNECTION = "${DASHING_SERVER}/widgets/${TARGET_WIDGET}"
-DATA_VIEW = "points"
-SESSION_HISTORY_FILE = sys.argv[0].strip('py') + "history"
+args                 = parser.parse_args()
+auth_token           = args.authtoken
+echo_version         = args.version
+servers              = args.servers.split()
+dashing_host         = args.dashing_host.strip('http://')
+target_widget        = args.widget
+dashing_env          = args.dashing_env
+num_recs_to_transmit = args.num_recs_to_transmit
+stat_to_graph        = args.stat
+dashing_host         = "http://" + dashing_host
+server_connection    =  dashing_host + '/widgets/' + target_widget
+DATA_VIEW            = "points"
+historyfile          = sys.argv[0].strip('py') + "history"
+
+if dashing_env == "production": dashing_http_port = "80" 
+if dashing_env == "testing": dashing_http_port = "3030" 
+
+##
+print "all args:\n", args
+print "\nUsing options:"
+print "auth_token =>", auth_token
+print "servers =>", servers
+print "num_recs_to_transmit =>", num_recs_to_transmit
+print "stat_to_graph =>", stat_to_graph
+print "dashing_http_port =>", dashing_http_port
+print "server_connection =>", server_connection
+##
+
 HEADER = ( "# Time, "
     "tx Active Sessions, "
     "tx Borrowed Count, "
@@ -34,18 +68,15 @@ HEADER = ( "# Time, "
     "non-tx Idle Sessions, "
     "non-tx Returned Count" )
 
-DASHING_HTTP_PORT_DEV = "3030"
-DASHING_HTTP_PORT_PROD = "80"
 
-
-def get_apipoolstats(api_server_list):
+def get_apipoolstats(serverS):
     
     '''
     Cycle through all API servers, retrieve stats, add values together.
     Return sum of stats.
     '''
 
-    # api_server_list = ['wwwapidev03-sc9']
+    # serverS = ['wwwapidev03-sc9']
     
     sum_tx_stats_active_sessions      = 0
     sum_tx_stats_borrowed_count       = 0
@@ -61,7 +92,7 @@ def get_apipoolstats(api_server_list):
     sum_non_tx_stats_idle_sessions    = 0
     sum_non_tx_stats_returned_count   = 0
 
-    for server in api_server_list:
+    for server in serverS:
 
         request_url = "http://" + server + '/api/v0/config/pool-stats'
         print "\nchecking", request_url
@@ -153,7 +184,7 @@ def save_values(stats):
 
     stats = str(stats).strip('()') + "\n" # convert integers to string and strip out ()
     line = time_stamp + ", " + stats
-    f = open(SESSION_HISTORY_FILE, 'a')
+    f = open(historyfile, 'a')
     f.write(line)
     print "\nWriting new values: ", line
     f.close
@@ -168,7 +199,7 @@ def transmit_values(num_of_recs, select_value):
     * Send to dashboard
     '''
 
-    f = open(SESSION_HISTORY_FILE, 'r')
+    f = open(historyfile, 'r')
     f.readline() # skip header
     lines = f.read()
     lines = lines.split('\n')
@@ -200,7 +231,7 @@ def transmit_values(num_of_recs, select_value):
         if line_no == line_range - 1:
             json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' } ]'
 
-    print "Sending JSON string, %s values: \n%s" % (str(num_of_recs), json_post_data)
+    print "Constructed JSON string containing %s values: \n%s" % (str(num_of_recs), json_post_data)
     f.close()
 
 
@@ -208,8 +239,8 @@ def transmit_values(num_of_recs, select_value):
 def get_recent_values():
     # value_len = "24"
   
-    # recent_values = ( tail -n ${value_len} $SESSION_HISTORY_FILE )
-    # for value in $recent_values:
+    # recent_values = ( tail -n ${value_len} $historyfile )
+               # for value in $recent_values:
     #     i += 1
     #     value[i]=field[i]
     pass
@@ -217,8 +248,12 @@ def get_recent_values():
 
 def main():
 
+    if echo_version:
+        print "%s version: %s " % (sys.argv[0].strip('./'), __version__)
+        exit(0)
+
     # Create/check output file for header and write it if needed
-    f = open(SESSION_HISTORY_FILE, 'r+')
+    f = open(historyfile, 'r+')
     line = f.readline()
     if not line.startswith('#'):
         f.write(HEADER + "\n")
@@ -228,12 +263,12 @@ def main():
     ## Call functions
     ##
     
-    # sum_stats = get_apipoolstats(API_SERVER_LIST)
+    # sum_stats = get_apipoolstats(SERVERS)
     # save_values(sum_stats)
 
     # time to push the bits to dashing
 
-    # Mapping of stat values
+    # Mapping of status values
     stats_map = {
         'timestamp':                         0,
         'sum_tx_stats_active_sessions':      1,
@@ -252,10 +287,10 @@ def main():
       }
 
     # Receive argument here for # of recs to get and target_value
-    NUM_OF_RECS = 5
-    target_value = "sum_non_tx_stats_returned_count"
 
-    transmit_values(NUM_OF_RECS, stats_map[target_value])
+    target_value = "sum_non_tx_stats_returned_count" ## Which stat to push to graph
+
+    transmit_values(num_recs_to_transmit, stats_map[target_value])
 
 if __name__ == '__main__':
     main()
