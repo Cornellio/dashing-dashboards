@@ -4,6 +4,11 @@
 # Add stats together
 # Write sums of stats to file
 # Push stats to dashing widgets
+#
+# TODO: 
+#   - fix repeated value in last pair of json string
+#   - make sure sums are right, x
+#   - do the http post of json string
 
 __version__ = '0.0.1'
 
@@ -14,16 +19,27 @@ import json
 import time
 import argparse
 
-parser = argparse.ArgumentParser(description = 'Process API session statistics and push to dashing server.')
-parser.add_argument('-v', '--version', help = 'Print version', required = False, action = 'store_true')
-parser.add_argument('-a', '--authtoken', help = 'Authentication token', required = True, dest = 'authtoken')
-parser.add_argument('-r', '--servers', help ='API servers to get stats from', required = False, dest = 'servers', default = 'wwwapidev03-sc9 wwwapidev05-sc9')
-parser.add_argument('-d', '--dashinghost', help ='Dashing server to push data to', required = False, dest = 'dashing_host', default = 'dashing.virginam.com')
-parser.add_argument('-w', '--widget', help ='Widget to send data to', required = False, dest = 'widget', default = 'web_api_stats')
-parser.add_argument('-f', '--historyfile', help ='File to store stats in', required = False, dest = 'historyfile', default = sys.argv[0].strip('py') + "history")
-parser.add_argument('-e', '--environment', help ='Dashing environment', required = False, dest = 'dashing_env', default = "production")
-parser.add_argument('-n', '--records', help ='Number of records to transmit when pushing stats to dashing server. This will be the nuber of values shown on the x-axis of the graph.', required = False, dest = 'num_recs_to_transmit', default = 6)
-parser.add_argument('-s', '--stat', help = "API stat to transmit to dashing server.", required = False, dest = 'stat', default = "sum_tx_stats_active_sessions" )
+parser = argparse.ArgumentParser(
+    description = 'Process API session statistics and push to dashing server.')
+parser.add_argument(
+    '-v', '--version', help = 'Print version', 
+    required = False, action = 'store_true')
+parser.add_argument('-t', '--authtoken', help = 'Authentication token', 
+    required = False, dest = 'authtoken', default = "mingle#trip")
+parser.add_argument('-r', '--servers', help ='API servers to get stats from',
+    required = False, dest = 'servers', 
+    default = 'wwwapidev03-sc9 wwwapidev05-sc9')
+parser.add_argument('-d', '--dashinghost', help ='Dashing server to push data to',
+    required = False, dest = 'dashing_host', default = 'dashing.virginam.com')
+parser.add_argument('-w', '--widget', help ='Widget to send data to', 
+    required = False, dest = 'widget', default = 'web_api_stats')
+parser.add_argument('-f', '--historyfile', help ='File to store stats in', 
+    required = False, dest = 'historyfile', default = sys.argv[0].strip('py') + "history")
+parser.add_argument('-e', '--environment', help ='Dashing environment', 
+    required = False, dest = 'dashing_env', default = "production")
+parser.add_argument('-n', '--records', help = 'Number of records to transmit when pushing stats to dashing server. This will be the nuber of values shown on the x-axis of the graph.', required = False, dest = 'num_recs_to_transmit', default = 6)
+parser.add_argument('-s', '--stat', help = "API stat to transmit to dashing server.", 
+    required = False, dest = 'stat', default = "sum_tx_stats_active_sessions" )
 
 args                 = parser.parse_args()
 auth_token           = args.authtoken
@@ -43,7 +59,6 @@ if dashing_env == "production": dashing_http_port = "80"
 if dashing_env == "testing": dashing_http_port = "3030" 
 
 ##
-print "all args:\n", args
 print "\nUsing options:"
 print "auth_token =>", auth_token
 print "servers =>", servers
@@ -69,14 +84,14 @@ HEADER = ( "# Time, "
     "non-tx Returned Count" )
 
 
-def get_apipoolstats(serverS):
+def get_apipoolstats(servers):
     
     '''
     Cycle through all API servers, retrieve stats, add values together.
     Return sum of stats.
     '''
 
-    # serverS = ['wwwapidev03-sc9']
+    # servers = ['wwwapidev03-sc9']
     
     sum_tx_stats_active_sessions      = 0
     sum_tx_stats_borrowed_count       = 0
@@ -92,7 +107,7 @@ def get_apipoolstats(serverS):
     sum_non_tx_stats_idle_sessions    = 0
     sum_non_tx_stats_returned_count   = 0
 
-    for server in serverS:
+    for server in servers:
 
         request_url = "http://" + server + '/api/v0/config/pool-stats'
         print "\nchecking", request_url
@@ -136,7 +151,14 @@ def get_apipoolstats(serverS):
         sum_non_tx_stats_returned_count  += non_tx_stats_returned_count    
 
         # Testing output
-        print "nonTransactionalPoolStats:"
+        print "\nTransactional:"
+        print "tx_stats_active_sessions     ", tx_stats_active_sessions 
+        print "tx_stats_borrowed_count      ", tx_stats_borrowed_count
+        print "tx_stats_closed_sessions     ", tx_stats_closed_sessions
+        print "tx_stats_created_count       ", tx_stats_created_count
+        print "tx_stats_destroyed_count     ", tx_stats_destroyed_count
+        print "tx_stats_idle_sessions       ", tx_stats_idle_sessions
+        print "\nNon Transactional:"
         print "non_tx_stats_active_sessions ",  non_tx_stats_active_sessions 
         print "non_tx_stats_borrowed_count  ",  non_tx_stats_borrowed_count  
         print "non_tx_stats_closed_sessions ",  non_tx_stats_closed_sessions 
@@ -145,30 +167,24 @@ def get_apipoolstats(serverS):
         print "non_tx_stats_idle_sessions   ",  non_tx_stats_idle_sessions   
         print "non_tx_stats_returned_count  ",  non_tx_stats_returned_count  
 
-        print "transactionalPoolStats:"
-        print "tx_stats_active_sessions     ", tx_stats_active_sessions 
-        print "tx_stats_borrowed_count      ", tx_stats_borrowed_count
-        print "tx_stats_closed_sessions     ", tx_stats_closed_sessions
-        print "tx_stats_created_count       ", tx_stats_created_count
-        print "tx_stats_destroyed_count     ", tx_stats_destroyed_count
-        print "tx_stats_idle_sessions       ", tx_stats_idle_sessions
-
         urldata.close()
 
     print "\nSums:"
-    print "sum_tx_stats_active_sessions", sum_tx_stats_active_sessions
-    print "sum_tx_stats_borrowed_count", sum_tx_stats_borrowed_count
-    print "sum_tx_stats_closed_sessions", sum_tx_stats_closed_sessions
-    print "sum_tx_stats_created_count", sum_tx_stats_created_count
-    print "sum_tx_stats_destroyed_count", sum_tx_stats_destroyed_count
-    print "sum_tx_stats_idle_sessions", sum_tx_stats_idle_sessions
-    print "sum_non_tx_stats_active_sessions", sum_non_tx_stats_active_sessions
-    print "sum_non_tx_stats_borrowed_count", sum_non_tx_stats_borrowed_count
-    print "sum_non_tx_stats_closed_sessions", sum_non_tx_stats_closed_sessions
-    print "sum_non_tx_stats_created_count", sum_non_tx_stats_created_count
-    print "sum_non_tx_stats_destroyed_count", sum_non_tx_stats_destroyed_count
-    print "sum_non_tx_stats_idle_sessions", sum_non_tx_stats_idle_sessions
-    print "sum_non_tx_stats_returned_count", sum_non_tx_stats_returned_count
+    print "\nTransactional:"
+    print "sum_tx_stats_active_sessions     ", sum_tx_stats_active_sessions
+    print "sum_tx_stats_borrowed_count      ", sum_tx_stats_borrowed_count
+    print "sum_tx_stats_closed_sessions     ", sum_tx_stats_closed_sessions
+    print "sum_tx_stats_created_count       ", sum_tx_stats_created_count
+    print "sum_tx_stats_destroyed_count     ", sum_tx_stats_destroyed_count
+    print "sum_tx_stats_idle_sessions       ", sum_tx_stats_idle_sessions
+    print "\nNon Transactional:"
+    print "sum_non_tx_stats_active_sessions ", sum_non_tx_stats_active_sessions
+    print "sum_non_tx_stats_borrowed_count  ", sum_non_tx_stats_borrowed_count
+    print "sum_non_tx_stats_closed_sessions ", sum_non_tx_stats_closed_sessions
+    print "sum_non_tx_stats_created_count   ", sum_non_tx_stats_created_count
+    print "sum_non_tx_stats_destroyed_count ", sum_non_tx_stats_destroyed_count
+    print "sum_non_tx_stats_idle_sessions   ", sum_non_tx_stats_idle_sessions
+    print "sum_non_tx_stats_returned_count  ", sum_non_tx_stats_returned_count
 
     return sum_tx_stats_active_sessions, sum_tx_stats_borrowed_count, sum_tx_stats_closed_sessions, sum_tx_stats_created_count, sum_tx_stats_destroyed_count, sum_tx_stats_idle_sessions, sum_non_tx_stats_active_sessions, sum_non_tx_stats_borrowed_count, sum_non_tx_stats_closed_sessions, sum_non_tx_stats_created_count, sum_non_tx_stats_destroyed_count, sum_non_tx_stats_idle_sessions, sum_non_tx_stats_returned_count
 
@@ -205,7 +221,8 @@ def transmit_values(num_of_recs, select_value):
     lines = lines.split('\n')
     lines_len = len(lines) - 1
     
-    print "\nNumber of lines: ", lines_len
+    print "\nNumber of lines in file: ", lines_len
+    print "Target stat to graph:", select_value
     # print "\nAll recs:\n", lines
 
     # rec_slice = lines[1:5]
@@ -263,10 +280,10 @@ def main():
     ## Call functions
     ##
     
-    # sum_stats = get_apipoolstats(SERVERS)
-    # save_values(sum_stats)
+    sum_stats = get_apipoolstats(servers)
+    save_values(sum_stats)
 
-    # time to push the bits to dashing
+    # time to push the to dashing
 
     # Mapping of status values
     stats_map = {
@@ -286,11 +303,7 @@ def main():
         'sum_non_tx_stats_returned_count':   13
       }
 
-    # Receive argument here for # of recs to get and target_value
-
-    target_value = "sum_non_tx_stats_returned_count" ## Which stat to push to graph
-
-    transmit_values(num_recs_to_transmit, stats_map[target_value])
+    transmit_values(num_recs_to_transmit, stats_map[stat_to_graph])
 
 if __name__ == '__main__':
     main()
