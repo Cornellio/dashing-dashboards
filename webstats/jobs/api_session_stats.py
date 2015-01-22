@@ -14,10 +14,12 @@ __version__ = '0.0.1'
 
 import os
 import sys
-import urllib
 import json
 import time
 import argparse
+import urllib2
+import httplib
+
 
 parser = argparse.ArgumentParser(
     description = 'Process API session statistics and push to dashing server.')
@@ -37,7 +39,7 @@ parser.add_argument('-f', '--historyfile', help ='File to store stats in',
     required = False, dest = 'historyfile', default = sys.argv[0].strip('py') + "history")
 parser.add_argument('-e', '--environment', help ='Dashing environment', 
     required = False, dest = 'dashing_env', default = "production")
-parser.add_argument('-n', '--records', help = 'Number of records to transmit when pushing stats to dashing server. This will be the nuber of values shown on the x-axis of the graph.', required = False, dest = 'num_recs_to_transmit', default = 6)
+parser.add_argument('-n', '--records', help = 'Number of records to transmit when pushing stats to dashing server. This will be the nuber of values shown on the x-axis of the graph.', required = False, dest = 'num_recs', default = 12)
 parser.add_argument('-s', '--stat', help = "API stat to transmit to dashing server.", 
     required = False, dest = 'stat', default = "sum_tx_stats_active_sessions" )
 
@@ -48,7 +50,7 @@ servers              = args.servers.split()
 dashing_host         = args.dashing_host.strip('http://')
 target_widget        = args.widget
 dashing_env          = args.dashing_env
-num_recs_to_transmit = args.num_recs_to_transmit
+num_recs = args.num_recs
 stat_to_graph        = args.stat
 dashing_host         = "http://" + dashing_host
 server_connection    =  dashing_host + '/widgets/' + target_widget
@@ -62,7 +64,7 @@ if dashing_env == "testing": dashing_http_port = "3030"
 print "\nUsing options:"
 print "auth_token =>", auth_token
 print "servers =>", servers
-print "num_recs_to_transmit =>", num_recs_to_transmit
+print "num_recs =>", num_recs
 print "stat_to_graph =>", stat_to_graph
 print "dashing_http_port =>", dashing_http_port
 print "server_connection =>", server_connection
@@ -113,7 +115,7 @@ def get_apipoolstats(servers):
         print "\nchecking", request_url
 
         # sample_json_data = '{"status":{"status":"SUCCESS"},"response":{"transactionalPoolStats":{"createdCount":753,"destroyedCount":753,"closedSessions":753,"activeSessions":0,"idleSessions":0,"borrowedCount":753},"nonTransactionalPoolStats":{"createdCount":79,"destroyedCount":79,"closedSessions":79,"activeSessions":0,"idleSessions":0,"borrowedCount":15646,"returnedCount":15646}}}'
-        urldata          = urllib.urlopen(request_url)
+        urldata          = urllib2.urlopen(request_url)
         response         = urldata.read()
         decoded          = json.loads(response)
         response_raw     = json.dumps(decoded, sort_keys=True, indent=4)
@@ -206,7 +208,7 @@ def save_values(stats):
     f.close
 
 
-def transmit_values(num_of_recs, select_value):
+def tail_history(n, target_stat):
     
     '''
     * Load entire file into list
@@ -222,11 +224,11 @@ def transmit_values(num_of_recs, select_value):
     lines_len = len(lines) - 1
     
     print "\nNumber of lines in file: ", lines_len
-    print "Target stat to graph:", select_value
+    print "Target stat to graph:", target_stat
     # print "\nAll recs:\n", lines
 
     # rec_slice = lines[1:5]
-    lines_start = ( int(lines_len) -1 ) - int(num_of_recs)
+    lines_start = ( int(lines_len) -1 ) - int(n)
     lines_end = lines_len
     # print lines_start, lines_end
     
@@ -239,7 +241,7 @@ def transmit_values(num_of_recs, select_value):
     # Build JSON String
     json_post_data = ''
     for line_no in xrange(1, line_range):
-        json_post_segment = lines_selected[line_no].split(', ')[select_value]
+        json_post_segment = lines_selected[line_no].split(', ')[target_stat]
         
         if line_no == 1:
             json_post_data += '[ { "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' }, '
@@ -248,19 +250,27 @@ def transmit_values(num_of_recs, select_value):
         if line_no == line_range - 1:
             json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' } ]'
 
-    print "Constructed JSON string containing %s values: \n%s" % (str(num_of_recs), json_post_data)
+    print "Constructed JSON string containing %s values: \n%s" % (str(n), json_post_data)
+    return json_post_data
     f.close()
 
+def transmit_values():
+    '''Send data to dashing server via http.'''
+    
+    json_data = '[ { "x": 1, "y": 121 }, { "x": 2, "y": 104 }, { "x": 3, "y": 104 }, { "x": 4, "y": 104 }, { "x": 5, "y": 104 }, { "x": 6, "y": 161 }, { "x": 7, "y": 161 }, { "x": 8, "y": 161 }, { "x": 9, "y": 161 }, { "x": 10, "y": 161 }, { "x": 11, "y": 161 }, { "x": 12, "y": 161 }, { "x": 12, "y": 1765 } ]'
 
-# Lookup recent values in file
-def get_recent_values():
-    # value_len = "24"
-  
-    # recent_values = ( tail -n ${value_len} $historyfile )
-               # for value in $recent_values:
-    #     i += 1
-    #     value[i]=field[i]
-    pass
+    post_data = '{ "auth_token": "mingle#trip", "points":' + json_data + '}'
+
+    print post_data
+    # exit(0)
+
+    h = httplib.HTTPConnection('dashing.virginam.com:3030')
+
+    u = urllib2.urlopen('http://dashing.virginam.com:3030', post_data)
+
+    h.request('POST', '/widgets/sum_tx_stats_active_sessions', post_data)
+    r = h.getresponse()
+    print r.read()
 
 
 def main():
@@ -303,7 +313,8 @@ def main():
         'sum_non_tx_stats_returned_count':   13
       }
 
-    transmit_values(num_recs_to_transmit, stats_map[stat_to_graph])
+    stat_values = tail_history(num_recs, stats_map[stat_to_graph])
+    
 
 if __name__ == '__main__':
     main()
