@@ -1,16 +1,16 @@
-#!/usr/bin/python
-# 
-# Get api stats from all servers
-# Add stats together
-# Write sums of stats to file
-# Push stats to dashing widgets
-#
-# TODO: 
-#   - fix repeated value in last pair of json string
-#   - make sure sums are right, x
-#   - do the http post of json string
+#!/usr/bin/python 
 
-__version__ = '0.0.1'
+'''
+Get api stats from all servers.
+Add stats together.
+Write sums of stats to file.
+Push stats to dashing widgets.
+
+TODO: 
+  - fix repeated value in last pair of json string
+  - make sure sums are right, OK
+  - do the http post of json string
+'''
 
 import os
 import sys
@@ -19,7 +19,6 @@ import time
 import argparse
 import urllib2
 import httplib
-
 
 parser = argparse.ArgumentParser(
     description = 'Process API session statistics and push to dashing server.')
@@ -314,7 +313,7 @@ def main():
       }
 
     stat_values = tail_history(num_recs, stats_map[stat_to_graph])
-    
+
 
 if __name__ == '__main__':
     main()
