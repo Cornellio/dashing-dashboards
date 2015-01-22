@@ -21,26 +21,40 @@ import urllib2
 import httplib
 
 parser = argparse.ArgumentParser(
-    description = 'Process API session statistics and push to dashing server.')
-parser.add_argument(
-    '-v', '--version', help = 'Print version', 
-    required = False, action = 'store_true')
-parser.add_argument('-t', '--authtoken', help = 'Authentication token', 
-    required = False, dest = 'authtoken', default = "mingle#trip")
-parser.add_argument('-r', '--servers', help ='API servers to get stats from',
-    required = False, dest = 'servers', 
-    default = 'wwwapidev03-sc9 wwwapidev05-sc9')
-parser.add_argument('-d', '--dashinghost', help ='Dashing server to push data to',
-    required = False, dest = 'dashing_host', default = 'dashing.virginam.com')
-parser.add_argument('-w', '--widget', help ='Widget to send data to', 
-    required = False, dest = 'widget', default = 'web_api_stats')
-parser.add_argument('-f', '--historyfile', help ='File to store stats in', 
-    required = False, dest = 'historyfile', default = sys.argv[0].strip('py') + "history")
-parser.add_argument('-e', '--environment', help ='Dashing environment', 
-    required = False, dest = 'dashing_env', default = "production")
-parser.add_argument('-n', '--records', help = 'Number of records to transmit when pushing stats to dashing server. This will be the nuber of values shown on the x-axis of the graph.', required = False, dest = 'num_recs', default = 12)
-parser.add_argument('-s', '--stat', help = "API stat to transmit to dashing server.", 
-    required = False, dest = 'stat', default = "sum_tx_stats_active_sessions" )
+                    description = 'Retrieve and process API session stats and send '
+                    'to dashing server for display on dashboards.')
+parser.add_argument('-s', help ='API servers to collect stats from.',
+                    required = False, dest = 'servers', 
+                    default = 'wwwapidev03-sc9 wwwapidev05-sc9')
+parser.add_argument('-d', help ='Dashing server to push data to.', 
+                    required = False, dest = 'dashing_host', 
+                    default = 'dashing.virginam.com')
+parser.add_argument('-w', help ='Widget to send data to',
+                    required = False, dest = 'widget', 
+                    default = 'web_api_stats')
+parser.add_argument('--stat', help = 'stat to send '
+                    'to dashing server.',
+                    required = False, dest = 'stat', 
+                    default = "sum_tx_stats_active_sessions" )
+parser.add_argument('-n', help = 'Number of data points to '
+                    'send to dashing server. This will be the nuber of '
+                    'values shown on the x-axis of the graph.', 
+                    required = False, dest = 'num_recs', default = 12)
+parser.add_argument('-a', help = 'Authentication token '
+                    'used by dashing server.',
+                    required = False, dest = 'authtoken', 
+                    default = "mingle#trip")
+parser.add_argument('-f', help ='File to store stats in.', 
+                    required = False, dest = 'historyfile', 
+                    default = sys.argv[0].strip('py') + "history")
+parser.add_argument('--environment', help ='Dashing environment. '
+                    'Defaults to production which uses port 80. '
+                    'Port 3030 will be used when environment is ' 
+                    'set to development.', 
+                    required = False, dest = 'dashing_env', 
+                    default = "production")
+parser.add_argument('--version', help = 'Print version and exit.', 
+                    required = False, action = 'store_true')
 
 args                 = parser.parse_args()
 auth_token           = args.authtoken
@@ -49,7 +63,7 @@ servers              = args.servers.split()
 dashing_host         = args.dashing_host.strip('http://')
 target_widget        = args.widget
 dashing_env          = args.dashing_env
-num_recs = args.num_recs
+num_recs             = args.num_recs
 stat_to_graph        = args.stat
 dashing_host         = "http://" + dashing_host
 server_connection    =  dashing_host + '/widgets/' + target_widget
