@@ -21,8 +21,8 @@ import urllib2
 import httplib
 
 parser = argparse.ArgumentParser(
-                    description = 'Retrieve and process API session stats and send '
-                    'to dashing server for display on dashboards.')
+                    description = 'Retrieve and process API session stats '
+                    'and send to Dashing server for display on dashboards.')
 parser.add_argument('-s', help ='API servers to collect stats from.',
                     required = False, dest = 'servers', 
                     default = 'wwwapidev03-sc9 wwwapidev05-sc9')
@@ -33,15 +33,15 @@ parser.add_argument('-w', help ='Widget to send data to',
                     required = False, dest = 'widget', 
                     default = 'web_api_stats')
 parser.add_argument('--stat', help = 'stat to send '
-                    'to dashing server.',
+                    'to Dashing server.',
                     required = False, dest = 'stat', 
                     default = "sum_tx_stats_active_sessions" )
 parser.add_argument('-n', help = 'Number of data points to '
-                    'send to dashing server. This will be the nuber of '
+                    'send to Dashing server. This will be the nuber of '
                     'values shown on the x-axis of the graph.', 
                     required = False, dest = 'num_recs', default = 12)
 parser.add_argument('-a', help = 'Authentication token '
-                    'used by dashing server.',
+                    'used by Dashing server.',
                     required = False, dest = 'authtoken', 
                     default = "mingle#trip")
 parser.add_argument('-f', help ='File to store stats in.', 
@@ -268,7 +268,7 @@ def tail_history(n, target_stat):
     f.close()
 
 def transmit_values():
-    '''Send data to dashing server via http.'''
+    '''Send data to Dashing server via http.'''
     
     json_data = '[ { "x": 1, "y": 121 }, { "x": 2, "y": 104 }, { "x": 3, "y": 104 }, { "x": 4, "y": 104 }, { "x": 5, "y": 104 }, { "x": 6, "y": 161 }, { "x": 7, "y": 161 }, { "x": 8, "y": 161 }, { "x": 9, "y": 161 }, { "x": 10, "y": 161 }, { "x": 11, "y": 161 }, { "x": 12, "y": 161 }, { "x": 12, "y": 1765 } ]'
 
