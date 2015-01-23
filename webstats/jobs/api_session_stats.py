@@ -9,7 +9,7 @@ Push stats to dashing widgets.
 TODO: 
   - fix repeated value in last pair of json string
   - make sure sums are right, OK
-  - do the http post of json string
+  - do the http post of json string...
 '''
 
 import os
@@ -22,38 +22,38 @@ import httplib
 
 parser = argparse.ArgumentParser(
                     description = 'Retrieve and process API session stats '
-                    'and send to Dashing server for display on dashboards.')
-parser.add_argument('-s', help ='API servers to collect stats from.',
+                    'and send to Dashing server for display')
+parser.add_argument('-s', help ='API servers to collect stats from',
                     required = False, dest = 'servers', 
                     default = 'wwwapidev03-sc9 wwwapidev05-sc9')
-parser.add_argument('-d', help ='Dashing server to push data to.', 
+parser.add_argument('-d', help ='Dashing server to push data to', 
                     required = False, dest = 'dashing_host', 
                     default = 'dashing.virginam.com')
 parser.add_argument('-w', help ='Widget to send data to',
                     required = False, dest = 'widget', 
                     default = 'web_api_stats')
 parser.add_argument('--stat', help = 'stat to send '
-                    'to Dashing server.',
+                    'to Dashing server',
                     required = False, dest = 'stat', 
                     default = "sum_tx_stats_active_sessions" )
 parser.add_argument('-n', help = 'Number of data points to '
-                    'send to Dashing server. This will be the nuber of '
-                    'values shown on the x-axis of the graph.', 
+                    'send to Dashing server, This will be the nuber of '
+                    'values shown on the x-axis of the graph', 
                     required = False, dest = 'num_recs', default = 12)
 parser.add_argument('-a', help = 'Authentication token '
-                    'used by Dashing server.',
+                    'used by Dashing server',
                     required = False, dest = 'authtoken', 
                     default = "mingle#trip")
-parser.add_argument('-f', help ='File to store stats in.', 
+parser.add_argument('-f', help ='Name of file to write stats to', 
                     required = False, dest = 'historyfile', 
                     default = sys.argv[0].strip('py') + "history")
-parser.add_argument('--environment', help ='Dashing environment. '
-                    'Defaults to production which uses port 80. '
-                    'Port 3030 will be used when environment is ' 
-                    'set to development.', 
+parser.add_argument('--environment', help ='Dashing environment to use, '
+                    'either "production" or "development", '
+                    'Defaults to production which uses port 80, '
+                    'Development uses port 3030',
                     required = False, dest = 'dashing_env', 
                     default = "production")
-parser.add_argument('--version', help = 'Print version and exit.', 
+parser.add_argument('--version', help = 'Print version and exit', 
                     required = False, action = 'store_true')
 
 args                 = parser.parse_args()
@@ -66,12 +66,13 @@ dashing_env          = args.dashing_env
 num_recs             = args.num_recs
 stat_to_graph        = args.stat
 dashing_host         = "http://" + dashing_host
-server_connection    =  dashing_host + '/widgets/' + target_widget
 DATA_VIEW            = "points"
 historyfile          = sys.argv[0].strip('py') + "history"
 
 if dashing_env == "production": dashing_http_port = "80" 
-if dashing_env == "testing": dashing_http_port = "3030" 
+if dashing_env == "development": dashing_http_port = "3030" 
+
+server_connection    =  dashing_host + ':' + dashing_http_port + '/widgets/' + target_widget
 
 ##
 print "\nUsing options:"
@@ -221,13 +222,12 @@ def save_values(stats):
     f.close
 
 
-def tail_history(n, target_stat):
+def tail_history(num_recs, selected_stat):
     
     '''
     * Load entire file into list
     * Split each line into separate list elements
     * Put tail -n into new list
-    * Send to dashboard
     '''
 
     f = open(historyfile, 'r')
@@ -237,11 +237,11 @@ def tail_history(n, target_stat):
     lines_len = len(lines) - 1
     
     print "\nNumber of lines in file: ", lines_len
-    print "Target stat to graph:", target_stat
+    print "Target stat to graph:", selected_stat
     # print "\nAll recs:\n", lines
 
     # rec_slice = lines[1:5]
-    lines_start = ( int(lines_len) -1 ) - int(n)
+    lines_start = ( int(lines_len) -1 ) - int(num_recs)
     lines_end = lines_len
     # print lines_start, lines_end
     
@@ -254,7 +254,7 @@ def tail_history(n, target_stat):
     # Build JSON String
     json_post_data = ''
     for line_no in xrange(1, line_range):
-        json_post_segment = lines_selected[line_no].split(', ')[target_stat]
+        json_post_segment = lines_selected[line_no].split(', ')[selected_stat]
         
         if line_no == 1:
             json_post_data += '[ { "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' }, '
@@ -263,25 +263,25 @@ def tail_history(n, target_stat):
         if line_no == line_range - 1:
             json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' } ]'
 
-    print "Constructed JSON string containing %s values: \n%s" % (str(n), json_post_data)
+    print "Constructed JSON string, %s values: \n%s" % (str(num_recs), json_post_data)
     return json_post_data
     f.close()
 
-def transmit_values():
+
+def transmit_values(stat_values, target_widget):
     '''Send data to Dashing server via http.'''
     
     json_data = '[ { "x": 1, "y": 121 }, { "x": 2, "y": 104 }, { "x": 3, "y": 104 }, { "x": 4, "y": 104 }, { "x": 5, "y": 104 }, { "x": 6, "y": 161 }, { "x": 7, "y": 161 }, { "x": 8, "y": 161 }, { "x": 9, "y": 161 }, { "x": 10, "y": 161 }, { "x": 11, "y": 161 }, { "x": 12, "y": 161 }, { "x": 12, "y": 1765 } ]'
 
-    post_data = '{ "auth_token": "mingle#trip", "points":' + json_data + '}'
+    data = '{ "auth_token": "mingle#trip", "points":' + stat_values + '}'
 
-    print post_data
-    # exit(0)
+    print "FOR JSON DATA\n", data
 
     h = httplib.HTTPConnection('dashing.virginam.com:3030')
 
-    u = urllib2.urlopen('http://dashing.virginam.com:3030', post_data)
+    u = urllib2.urlopen('http://dashing.virginam.com:3030', data)
 
-    h.request('POST', '/widgets/sum_tx_stats_active_sessions', post_data)
+    h.request('POST', '/widgets/' + target_widget, data)
     r = h.getresponse()
     print r.read()
 
@@ -306,7 +306,7 @@ def main():
     sum_stats = get_apipoolstats(servers)
     save_values(sum_stats)
 
-    # time to push the to dashing
+    # time to push to dashing
 
     # Mapping of status values
     stats_map = {
@@ -321,13 +321,13 @@ def main():
         'sum_non_tx_stats_borrowed_count':   8,
         'sum_non_tx_stats_closed_sessions':  9,
         'sum_non_tx_stats_created_count':    10,
-        'sum_non_tx_stats_destroyed_count':  11,
+        'sum_non_tx_stats_destroyed_count':  11,        
         'sum_non_tx_stats_idle_sessions':    12,
         'sum_non_tx_stats_returned_count':   13
       }
 
     stat_values = tail_history(num_recs, stats_map[stat_to_graph])
-
+    transmit_values(stat_values, target_widget)
 
 if __name__ == '__main__':
     main()
