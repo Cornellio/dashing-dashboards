@@ -8,8 +8,6 @@ Push stats to dashing widgets.
 
 TODO: 
   - fix repeated value in last pair of json string
-  - make sure sums are right, OK
-  - do the http post of json string...
 '''
 
 import os
