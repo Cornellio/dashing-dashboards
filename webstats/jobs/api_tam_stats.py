@@ -43,7 +43,7 @@ parser.add_argument('-i', help = 'Interval of data points to '
 parser.add_argument('-f', help ='Name of file to write stats to', 
                     required = False, dest = 'historyfile', 
                     default = sys.argv[0].strip('py') + "history_dev")
-parser.add_argument('--environment', help ='Dashing environment to use, '
+parser.add_argument('-e', '--environment', help ='Dashing environment to use, '
                     'either "production" or "development", '
                     'Defaults to production which uses port 80, '
                     'Development uses port 3030',
@@ -68,8 +68,12 @@ DATA_VIEW            = "points"
 historyfile          = args.historyfile
 echo_version         = args.version
 
-if dashing_env == "production": dashing_http_port = "80" 
-if dashing_env == "development": dashing_http_port = "3030" 
+
+try:
+    dashing_env == "production": dashing_http_port = "80" 
+    dashing_env == "development": dashing_http_port = "3030" 
+except Exception:
+    exit(0)
 
 server_connection    =  dashing_host + ':' + dashing_http_port + '/widgets/' + target_widget
 
