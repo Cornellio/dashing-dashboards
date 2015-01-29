@@ -42,15 +42,19 @@ DATA_VIEW            = "points"
 historyfile          = args.historyfile
 echo_version         = args.version
 dashing_http_port    = "80"
-server_connection    =  dashing_host + ':' + dashing_http_port + 
-                        '/widgets/' + target_widget
+server_connection    =  ( dashing_host + ':' + dashing_http_port + 
+                        '/widgets/' + target_widget )
 
 
-def tam_session_max(file)
-    f = open(file, r)
-    for x in xrange(1,10):
-        line = readline(f)
-        print "x", line
+def tam_session_max(file):
+    with open(file) as f:
+        values = []
+        for line in f:
+            if line.strip():
+                line = int(line)
+                values.append(line)
+
+        return max(values)
 
 
 def transmit_values(stat_values, target_widget):
@@ -65,19 +69,17 @@ def main():
         exit(0)
 
     ##
-    print "\nUsing options:"
-    print args
-    exit(0)
+    print "\nUsing options:", args
     ##
 
     ##
     ## Call functions
     ##
     
-    max = tam_session_max(historyfile)
-    print max
+    max_value = tam_session_max(historyfile)
+    print "max reading", max_value
     exit(0)
-    transmit_values(max, target_widget)
+    transmit_values(max_value, target_widget)
 
     # time to push to dashing
 
