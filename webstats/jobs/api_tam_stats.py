@@ -24,7 +24,7 @@ parser.add_argument('-d', help ='Dashing server to push data to',
                     default = 'dashing.virginam.com')
 parser.add_argument('-w', help ='Widget to send data to',
                     required = False, dest = 'widget', 
-                    default = 'web_api_stats')
+                    default = 'sabresessions')
 parser.add_argument('-a', help = 'Authentication token '
                     'used by Dashing server',
                     required = False, dest = 'authtoken', 
@@ -36,7 +36,9 @@ parser.add_argument('-n', help = 'Number of data points to '
                     'values shown on the x-axis of the graph', 
                     required = False, dest = 'num_recs', default = 12)
 parser.add_argument('-i', help = 'Interval of data points to '
-                    'plot, This is the number of records to skip'
+                    'plot, where this number represents how many records '
+                    'in history file to skip in order to plot data points '
+                    'beyond the default 5 minute interval',
                     required = False, dest = 'num_interval', default = 1)
 parser.add_argument('-f', help ='Name of file to write stats to', 
                     required = False, dest = 'historyfile', 
