@@ -35,6 +35,8 @@ def return_args():
                         'used by Dashing server',
                         required=False, dest='authtoken',
                         default="mingle#trip")
+    parser.add_argument('--endpoint', help='TAM stats lookup endpoint',
+                        dest='http_endpoint', required=True)
     parser.add_argument('-l', help='Sabre Login Key',
                         required=False, dest='loginkey', default='tst_key')
     parser.add_argument('-n', help='Number of data points to '
@@ -71,6 +73,7 @@ def return_args():
     DATA_VIEW     = "points"
     historyfile   = args.historyfile
     echo_version  = args.version
+    http_endpoint = args.http_endpoint
 
     return (auth_token,
             login_key,
@@ -81,15 +84,31 @@ def return_args():
             num_interval,
             DATA_VIEW,
             historyfile,
-            echo_version)
+            echo_version,
+            http_endpoint)
 
 
-def get_tam_usage(servers):
-    pass
+def check_file(file, header):
+    '''Create/check output file for header and write it if needed'''
+    try:
+        f = open(file, 'r')
+    except:
+        f = open(file, 'w+')
+        line = f.readline()
+        if not line.startswith('#'):
+            f.write(header + "\n")
+        f.close
 
 
-def save_tam_usage(stats):
-    pass
+def set_environment(environment):
+    if environment == "production":
+        dashing_http_port = "80"
+    elif environment == "development":
+        dashing_http_port = "3030"
+    else:
+        environment = None
+        dashing_http_port = None
+    return environment, dashing_http_port
 
 
 def tail_history(file, num, skip_interval):
@@ -110,7 +129,7 @@ def tail_history(file, num, skip_interval):
                 values.append(value)
     values = values[-num:]
 
-    # Select values based on skip_interval
+    # Select every n'th occurance in list, where n is the skip_interval
     i = 0
     selected_values = []
     for value in values:
@@ -121,32 +140,29 @@ def tail_history(file, num, skip_interval):
     return selected_values
 
 
+def get_tam_usage(server, key):
+    '''Lookup TAM usage via HTTP and return it'''
+
+    tam_usage_field_num = 53
+
+    request_url = server + '?loginKey=' + key
+    urldata = urllib2.urlopen(request_url)
+    response = urldata.read()
+    tam_usage = response.split()[tam_usage_field_num]
+
+    return tam_usage
+
+
+def save_tam_usage(file, value):
+    
+    with open(file, 'r+') as f:
+        txt = f.read()
+
+    print txt
+
 def transmit_values(stat_values, target_widget):
     '''Send data to Dashing server via http'''
     pass
-
-
-def set_environment(environment):
-    if environment == "production":
-        dashing_http_port = "80"
-    elif environment == "development":
-        dashing_http_port = "3030"
-    else:
-        environment = None
-        dashing_http_port = None
-    return environment, dashing_http_port
-
-
-def check_file(file, header):
-    '''Create/check output file for header and write it if needed'''
-    try:
-        f = open(file, 'r')
-    except:
-        f = open(file, 'w+')
-        line = f.readline()
-        if not line.startswith('#'):
-            f.write(header + "\n")
-        f.close
 
 
 def main():
@@ -160,7 +176,8 @@ def main():
         num_interval,
         DATA_VIEW,
         historyfile,
-        echo_version) = return_args()
+        echo_version,
+        http_endpoint) = return_args()
 
     if echo_version:
         print "%s version: %s " % (sys.argv[0].strip('./'), __version__)
@@ -195,8 +212,9 @@ def main():
     ## Call functions
     ##
 
-    # get_tam_usage
-    # save_tam_usage
+    tam_usage = get_tam_usage(http_endpoint, login_key)
+
+    save_tam_usage(historyfile, tam_usage)
     selected_values = tail_history(historyfile, num_recs, num_interval)
     print selected_values
     # transmit_values(stat_values, target_widget)
