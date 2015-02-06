@@ -5,7 +5,7 @@ Lookup current TAM pool usage from Sabre.
 Save results to file.
 Push stats to dashing.
 
-TODO: refactor from bash script
+
 '''
 
 import os
@@ -35,9 +35,9 @@ def return_args():
                         'used by Dashing server',
                         required=False, dest='authtoken',
                         default="mingle#trip")
-    parser.add_argument('--endpoint', help='TAM stats lookup endpoint',
-                        dest='http_endpoint', required=True)
-    parser.add_argument('-l', help='Sabre Login Key',
+    parser.add_argument('--http_endpoint', help='HTTP endpoint from which to '
+                        'lookup stats', required=True)
+    parser.add_argument('-k', help='Sabre Login Key',
                         required=False, dest='loginkey', default='tst_key')
     parser.add_argument('-n', help='Number of data points to '
                         'send to Dashing server, This will be the nuber of '
@@ -96,7 +96,7 @@ def check_file(file, header):
         f = open(file, 'w+')
         line = f.readline()
         if not line.startswith('#'):
-            f.write(header + "\n")
+            f.write(header)
         f.close
 
 
@@ -124,7 +124,7 @@ def tail_history(file, num, skip_interval):
         values = []
         for line in f:
             if line.strip():
-                value = line.split()
+                value = line.split(", ")
                 value = int(value[1])
                 values.append(value)
     values = values[-num:]
@@ -153,12 +153,16 @@ def get_tam_usage(server, key):
     return tam_usage
 
 
-def save_tam_usage(file, value):
-    
-    with open(file, 'r+') as f:
-        txt = f.read()
+def save_tam_usage(file_out, value):
 
-    print txt
+    now_time = time.strftime("%H:%M")
+    now_date = time.strftime("%Y-%m-%d")
+    time_stamp = now_date + " " + now_time
+
+    with open(file_out, 'a') as f:
+        line = time_stamp + ", " + value
+        f.write(line + "\n")
+
 
 def transmit_values(stat_values, target_widget):
     '''Send data to Dashing server via http'''
@@ -191,7 +195,7 @@ def main():
     server_connection = (dashing_host + ':' + dashing_http_port +
                          '/widgets/' + target_widget)
 
-    HEADER = '# Time, TAM Sessions'
+    HEADER = '# Time, TAM Sessions\n'
 
     check_file(historyfile, HEADER)
 
