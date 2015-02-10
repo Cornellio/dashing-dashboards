@@ -4,9 +4,9 @@
 Lookup current TAM pool usage from Sabre.
 Save results to file.
 Push stats to dashing.
-
-
 '''
+
+# ./api_tam_stats.py --http_endpoint https://www.virginamerica.com/api/v0/session/usage -k 63143A98C468F4F5568E8D3CFC1C1EF8FFE674E630F9FABA108986973E296A01
 
 import os
 import sys
@@ -42,7 +42,7 @@ def return_args():
     parser.add_argument('-n', help='Number of data points to '
                         'send to Dashing server, This will be the nuber of '
                         'values shown on the x-axis of the graph',
-                        required=False, dest='num_recs', default=12)
+                        required=False, dest='num_recs', default=4)
     parser.add_argument('-i', help='Interval of data points to '
                         'plot, where this number represents how many records '
                         'in history file to skip when plotting data points, '
@@ -164,9 +164,31 @@ def save_tam_usage(file_out, value):
         f.write(line + "\n")
 
 
-def transmit_values(stat_values, target_widget):
+def graph_points(values):
+    '''Construct a formatted string of points from list of values'''
+
+    points = ''
+    for record_num in range(0, len(values)):
+        data_segment = values[record_num]
+        x_value = str(record_num + 1)
+
+        if record_num == 0:
+            points += '[{ "x": ' + x_value + ', "y": ' + str(data_segment) + ' }, '
+        if record_num > 0 and record_num < len(values)-1:
+            points += '{ "x": ' + x_value + ', "y": ' + str(data_segment) + ' }, '
+        if record_num == len(values)-1:
+            points += '{ "x": ' + x_value + ', "y": ' + str(data_segment) + ' }]'
+
+    return points
+
+
+def transmit_values(data, server, token, widget):
     '''Send data to Dashing server via http'''
-    pass
+
+    post_data = '{ "auth_token": "' + token + '", "points": ' + data + '} '
+    print post_data + server
+    
+    # print server + data
 
 
 def main():
@@ -212,16 +234,20 @@ def main():
     # exit(0)
     ##
 
-    ##
-    ## Call functions
-    ##
+    #
+    # Call functions
+    #
 
-    tam_usage = get_tam_usage(http_endpoint, login_key)
+    # tam_usage = get_tam_usage(http_endpoint, login_key)
 
-    save_tam_usage(historyfile, tam_usage)
+    save_tam_usage(historyfile, "1514") ## test value
     selected_values = tail_history(historyfile, num_recs, num_interval)
-    print selected_values
-    # transmit_values(stat_values, target_widget)
+    print "main:\nselected_values", selected_values
+
+    points = graph_points(selected_values)
+    print points
+
+    transmit_values(points, server_connection, auth_token, target_widget)
 
     # time to push to dashing
 
