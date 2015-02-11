@@ -44,11 +44,15 @@ def return_args():
                         'plot, where this number represents how many records '
                         'in history file to skip when plotting data points, '
                         'Allows plotting intervals other than default 5 '
-                        'minute interval',
-                        required=False, type=int, dest='num_interval', default=1)
+                        'minute interval', required=False, type=int,
+                        dest='num_interval', default=1)
+    parser.add_argument('-x', '--skip_tam_lookup', help='Do not lookup '
+                        'current TAM usage from Sabre, just graph historical '
+                        'values', dest='skip_tam_lookup', required=False,
+                        action='store_true')
     parser.add_argument('-f', help='Name of file to write stats to',
                         required=False, dest='historyfile',
-                        default=sys.argv[0].strip('py') + "history_dev")
+                        default=sys.argv[0].strip('py') + "history")
     parser.add_argument('-e', '--environment', help='Dashing environment '
                         'to use, either "production" or "development", '
                         'Defaults to production which uses port 80, '
@@ -70,6 +74,7 @@ def return_args():
     historyfile   = args.historyfile
     echo_version  = args.version
     http_endpoint = args.http_endpoint
+    skip_lookup   = args.skip_tam_lookup
 
     return (auth_token,
             login_key,
@@ -81,7 +86,8 @@ def return_args():
             DATA_VIEW,
             historyfile,
             echo_version,
-            http_endpoint)
+            http_endpoint,
+            skip_lookup)
 
 
 def check_file(file, header):
@@ -121,7 +127,7 @@ def tail_history(file, num, skip_interval):
         for line in f:
             if line.strip():
                 value = line.split(", ")
-                value = int(value[1])
+                value = value[1]
                 values.append(value)
     values = values[-num:]
 
@@ -204,7 +210,8 @@ def main():
         DATA_VIEW,
         historyfile,
         echo_version,
-        http_endpoint) = return_args()
+        http_endpoint,
+        skip_lookup) = return_args()
 
     if echo_version:
         print "%s version: %s " % (sys.argv[0].strip('./'), __version__)
@@ -240,18 +247,14 @@ def main():
     # Call functions
     #
 
-    # tam_usage = get_tam_usage(http_endpoint, login_key)
+    if skip_lookup is False:
+        tam_usage = get_tam_usage(http_endpoint, login_key)
+        save_tam_usage(historyfile, tam_usage)
 
-    save_tam_usage(historyfile, "401") ## test value
     selected_values = tail_history(historyfile, num_recs, num_interval)
-    print "main:\nselected_values", selected_values
-
     points = graph_points(selected_values)
-    print points
-
-    transmit_values(dashing_host, dashing_http_port, target_widget, auth_token, points)
-
-    # time to push to dashing
+    transmit_values(dashing_host, dashing_http_port,
+                    target_widget, auth_token, points)
 
 
 if __name__ == '__main__':
