@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
 '''
-Push Sabre TAM pool usage data to Dashing server.
-Lookup current TAM pool usage from Sabre.
-Save results to file.
-Read historical values from file and post to server.
+Dashing job for graphing Sabre TAM pool usage.
+Lookup current TAM pool usage from Sabre, save results to a file,
+then read historical values from file and post to a Dashing graph.
 '''
-# TODO: Last value is getting repeated when sending
+# TODO: Fix repeated last value
 
 import sys
 import time
