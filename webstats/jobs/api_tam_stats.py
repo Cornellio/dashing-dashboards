@@ -1,16 +1,14 @@
 #!/usr/bin/python
 
 '''
+Push Sabre TAM pool usage data to Dashing server.
 Lookup current TAM pool usage from Sabre.
 Save results to file.
-Push stats to dashing.
+Read historical values from file and post to server.
 '''
+# TODO: Last value is getting repeated when sending
 
-# ./api_tam_stats.py --http_endpoint https://www.virginamerica.com/api/v0/session/usage -k 63143A98C468F4F5568E8D3CFC1C1EF8FFE674E630F9FABA108986973E296A01
-
-import os
 import sys
-import json
 import time
 import argparse
 import urllib2
@@ -42,13 +40,13 @@ def return_args():
     parser.add_argument('-n', help='Number of data points to '
                         'send to Dashing server, This will be the nuber of '
                         'values shown on the x-axis of the graph',
-                        required=False, dest='num_recs', default=4)
+                        required=False, type=int, dest='num_recs', default=12)
     parser.add_argument('-i', help='Interval of data points to '
                         'plot, where this number represents how many records '
                         'in history file to skip when plotting data points, '
                         'Allows plotting intervals other than default 5 '
                         'minute interval',
-                        required=False, dest='num_interval', default=1)
+                        required=False, type=int, dest='num_interval', default=1)
     parser.add_argument('-f', help='Name of file to write stats to',
                         required=False, dest='historyfile',
                         default=sys.argv[0].strip('py') + "history_dev")
@@ -69,7 +67,6 @@ def return_args():
     dashing_env   = args.dashing_env
     num_recs      = args.num_recs
     num_interval  = args.num_interval
-    dashing_host  = "http://" + dashing_host
     DATA_VIEW     = "points"
     historyfile   = args.historyfile
     echo_version  = args.version
@@ -182,13 +179,18 @@ def graph_points(values):
     return points
 
 
-def transmit_values(data, server, token, widget):
+def transmit_values(host, port, widget, token, data):
     '''Send data to Dashing server via http'''
 
     post_data = '{ "auth_token": "' + token + '", "points": ' + data + '} '
-    print post_data + server
-    
-    # print server + data
+    print "Transmitting to", host + ':' + port + '/widgets/' + widget
+    print "Data: ", data
+
+    http = httplib.HTTPConnection(host, port)    
+    http.request('POST', '/widgets/' + widget, post_data)
+
+    response = http.getresponse()
+    print response.read()
 
 
 def main():
@@ -214,8 +216,8 @@ def main():
         print "Bad environment setting:\nTry " + sys.argv[0] + " -h"
         exit(1)
 
-    server_connection = (dashing_host + ':' + dashing_http_port +
-                         '/widgets/' + target_widget)
+    # server_connection = (dashing_host + ':' + dashing_http_port +
+    #                      '/widgets/' + target_widget)
 
     HEADER = '# Time, TAM Sessions\n'
 
@@ -228,7 +230,8 @@ def main():
     print "num_recs =>", num_recs
     print "num_interval =>", num_interval
     print "dashing_http_port =>", dashing_http_port
-    print "server_connection =>", server_connection
+    print "server_connection =>", (dashing_host + ':' + dashing_http_port +
+                                   '/widgets/' + target_widget)
     print "historyfile =>", historyfile
     print "header", HEADER
     # exit(0)
@@ -240,14 +243,14 @@ def main():
 
     # tam_usage = get_tam_usage(http_endpoint, login_key)
 
-    save_tam_usage(historyfile, "1514") ## test value
+    save_tam_usage(historyfile, "401") ## test value
     selected_values = tail_history(historyfile, num_recs, num_interval)
     print "main:\nselected_values", selected_values
 
     points = graph_points(selected_values)
     print points
 
-    transmit_values(points, server_connection, auth_token, target_widget)
+    transmit_values(dashing_host, dashing_http_port, target_widget, auth_token, points)
 
     # time to push to dashing
 
