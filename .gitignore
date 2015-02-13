@@ -1,0 +1,5 @@
+config.ru
+.*.sw?
+*~
+\.svn
+\.DS_Store
