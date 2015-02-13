@@ -1,5 +1,4 @@
 #!/usr/bin/python 
-
 '''
 Get api stats from all servers.
 Add stats together.
@@ -9,6 +8,8 @@ Push stats to dashing widgets.
 TODO: 
   - fix repeated value in last pair of json string
 '''
+__version__ = '0.1.0'
+__author__ = 'Pete Cornell <pete.cornell@virginamerica.com>'
 
 import os
 import sys

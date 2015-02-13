@@ -70,7 +70,7 @@ def return_args():
     dashing_env   = args.dashing_env
     num_recs      = args.num_recs
     num_interval  = args.num_interval
-    DATA_VIEW     = "points"
+    DATA_VIEW     = "list"
     historyfile   = args.historyfile
     echo_version  = args.version
     http_endpoint = args.http_endpoint
