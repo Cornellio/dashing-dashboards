@@ -61,7 +61,7 @@ def get_ui_build(env):
     '''Return UI Build'''
 
     if env == 'prod':
-        site = 'https://www.virginamerica.com/'
+        site = 'https://www.virginamerica.com/status/'
     if env == 'dev':
         site = 'http://www3.dev.virginamerica.com/status/'
     if env == 'qa':
@@ -127,9 +127,9 @@ def get_cms_build(env):
 def transmit_values(host, port, widget, token, ui_build, api_build, cms_build):
     '''Construct string for list item widget and send to Dashing server'''
 
-    items = ('{"label": "UI Build", "value": "'
-             + ui_build + '"}, {"label": "CMS Build", "value": "'
-             + cms_build + '"}, {"label": "API Build", "value": "'
+    items = ('{"label": "UI", "value": "'
+             + ui_build + '"}, {"label": "CMS", "value": "'
+             + cms_build + '"}, {"label": "API", "value": "'
              + api_build + '"}')
 
     post_data = '{ "auth_token": "' + token + '", "items": [ ' + items + '] }'
