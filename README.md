@@ -1,4 +1,4 @@
-dashing-dashboards
+Dashing Dashboards
 ==================
 
-My collection of DevOps related dashboards assembled with the Dashing framework
+Collection of dashboards and Python jobs used with the Dashing framework.
