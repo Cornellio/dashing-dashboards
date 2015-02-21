@@ -3,9 +3,7 @@ config.ru
 *~
 \.svn
 \.DS_Store
-
+*.sublime-*
 *.history
-
 webstats/jobs/api_tam_stats.history_dev
-
 webstats/jobs/api_tam_stats.history.short
