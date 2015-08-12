@@ -33,6 +33,12 @@ Here's a brief description of each job:
 
 `web_build_stats.py` - Collect version information from our web servers in Dev, QA and production, and push to dashboard list widget; includes versions of internal website components including API, UI and CMS
 
+`api_net_stats.py` - Collect net stats.
+
+Example usage:
+./api_net_stats.py -s 'wwwapi02-sc9 wwwapi03-sc9 wwwapi05-sc9 wwwapi06-sc9' -d dashing.virginam.com -w apinetstats
+
+
 Reference
 ---------
 
