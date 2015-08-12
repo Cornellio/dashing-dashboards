@@ -1,0 +1,7 @@
+*DS_STORE
+.*.sw?
+*~
+\.svn
+\.DS_Store
+*.history*
+*sample*
