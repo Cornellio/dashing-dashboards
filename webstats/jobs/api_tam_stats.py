@@ -13,9 +13,11 @@ import argparse
 import urllib2
 import httplib
 
+__version__ = '0.9.0'
+__author__  = 'Pete Cornell'
+
 
 def return_args():
-    '''Parse command line arguments'''
 
     parser = argparse.ArgumentParser(
         description='Retrieve and process Sabre TAM usage '
@@ -89,8 +91,7 @@ def return_args():
 
 
 def check_file(file, header):
-    '''Create output file and write heater'''
-
+    '''Create/check output file for header and write it if needed'''
     try:
         f = open(file, 'r')
     except:
@@ -190,7 +191,7 @@ def transmit_values(host, port, widget, token, data):
     print "Transmitting to", host + ':' + port + '/widgets/' + widget
     print "Data: ", data
 
-    http = httplib.HTTPConnection(host, port)
+    http = httplib.HTTPConnection(host, port)    
     http.request('POST', '/widgets/' + widget, post_data)
 
     response = http.getresponse()
@@ -239,6 +240,8 @@ def main():
                                    '/widgets/' + target_widget)
     print "historyfile =>", historyfile
     print "header", HEADER
+    # exit(0)
+    ##
 
     #
     # Call functions
