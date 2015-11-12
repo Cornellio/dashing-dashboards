@@ -70,7 +70,6 @@ def return_args():
     num_interval  = args.num_interval
     DATA_VIEW     = "graph"
     historyfile   = args.historyfile
-    echo_version  = args.version
     http_endpoint = args.http_endpoint
     skip_lookup   = args.skip_tam_lookup
 
@@ -83,7 +82,6 @@ def return_args():
             num_interval,
             DATA_VIEW,
             historyfile,
-            echo_version,
             http_endpoint,
             skip_lookup)
 
@@ -208,21 +206,14 @@ def main():
         num_interval,
         DATA_VIEW,
         historyfile,
-        echo_version,
         http_endpoint,
         skip_lookup) = return_args()
 
-    if echo_version:
-        print "%s version: %s " % (sys.argv[0].strip('./'), __version__)
-        exit(0)
-
     environment, dashing_http_port = set_environment(dashing_env)
+
     if environment is None:
         print "Bad environment setting:\nTry " + sys.argv[0] + " -h"
         exit(1)
-
-    # server_connection = (dashing_host + ':' + dashing_http_port +
-    #                      '/widgets/' + target_widget)
 
     HEADER = '# Time, TAM Sessions\n'
 
@@ -244,6 +235,7 @@ def main():
     # Call functions
     #
 
+    # To just graph historical values, don't lookup current value
     if skip_lookup is False:
         tam_usage = get_tam_usage(http_endpoint, login_key)
         save_tam_usage(historyfile, tam_usage)
