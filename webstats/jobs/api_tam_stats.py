@@ -142,7 +142,7 @@ def tail_history(file, num, skip_interval):
 def get_tam_usage(server, key):
     '''Lookup TAM usage via HTTP and return it'''
 
-    tam_usage_field_num = 53
+    tam_usage_field_num = 56
 
     request_url = server + '?loginKey=' + key
     urldata = urllib2.urlopen(request_url)
