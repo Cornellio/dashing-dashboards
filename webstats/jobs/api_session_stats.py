@@ -4,11 +4,8 @@ Get api stats from all servers.
 Add stats together.
 Write sums of stats to file.
 Push stats to dashing widgets.
-TODO:
-  - fix repeated value in last pair of json string
 '''
-__version__ = '0.1.0'
-__author__ = 'Pete Cornell <pete.cornell@virginamerica.com>'
+__version__ = '0.2.0'
 
 import os
 import sys
@@ -72,16 +69,6 @@ if dashing_env == "development": dashing_http_port = "3030"
 
 server_connection    =  dashing_host + ':' + dashing_http_port + '/widgets/' + target_widget
 
-##
-print "\nUsing options:"
-print "auth_token =>", auth_token
-print "servers =>", servers
-print "num_recs =>", num_recs
-print "stat_to_graph =>", stat_to_graph
-print "dashing_http_port =>", dashing_http_port
-print "server_connection =>", server_connection
-##
-
 HEADER = ( "# Time, "
     "tx Active Sessions, "
     "tx Borrowed Count, "
@@ -105,8 +92,6 @@ def get_apipoolstats(servers):
     Return sum of stats.
     '''
 
-    # servers = ['wwwapidev03-sc9']
-
     sum_tx_stats_active_sessions      = 0
     sum_tx_stats_borrowed_count       = 0
     sum_tx_stats_closed_sessions      = 0
@@ -126,7 +111,6 @@ def get_apipoolstats(servers):
         request_url = "http://" + server + '/api/v0/config/pool-stats'
         print "\nchecking", request_url
 
-        # sample_json_data = '{"status":{"status":"SUCCESS"},"response":{"transactionalPoolStats":{"createdCount":753,"destroyedCount":753,"closedSessions":753,"activeSessions":0,"idleSessions":0,"borrowedCount":753},"nonTransactionalPoolStats":{"createdCount":79,"destroyedCount":79,"closedSessions":79,"activeSessions":0,"idleSessions":0,"borrowedCount":15646,"returnedCount":15646}}}'
         urldata          = urllib2.urlopen(request_url)
         response         = urldata.read()
         decoded          = json.loads(response)
@@ -149,7 +133,7 @@ def get_apipoolstats(servers):
         non_tx_stats_idle_sessions      = decoded['response']['nonTransactionalPoolStats']['idleSessions']
         non_tx_stats_returned_count     = decoded['response']['nonTransactionalPoolStats']['returnedCount']
 
-        # Add values together
+        # Sum values
         sum_tx_stats_active_sessions     += tx_stats_active_sessions
         sum_tx_stats_borrowed_count      += tx_stats_borrowed_count
         sum_tx_stats_closed_sessions     += tx_stats_closed_sessions
@@ -163,23 +147,6 @@ def get_apipoolstats(servers):
         sum_non_tx_stats_destroyed_count += non_tx_stats_destroyed_count
         sum_non_tx_stats_idle_sessions   += non_tx_stats_idle_sessions
         sum_non_tx_stats_returned_count  += non_tx_stats_returned_count
-
-        # Testing output
-        print "\nTransactional:"
-        print "tx_stats_active_sessions     ", tx_stats_active_sessions
-        print "tx_stats_borrowed_count      ", tx_stats_borrowed_count
-        print "tx_stats_closed_sessions     ", tx_stats_closed_sessions
-        print "tx_stats_created_count       ", tx_stats_created_count
-        print "tx_stats_destroyed_count     ", tx_stats_destroyed_count
-        print "tx_stats_idle_sessions       ", tx_stats_idle_sessions
-        print "\nNon Transactional:"
-        print "non_tx_stats_active_sessions ",  non_tx_stats_active_sessions
-        print "non_tx_stats_borrowed_count  ",  non_tx_stats_borrowed_count
-        print "non_tx_stats_closed_sessions ",  non_tx_stats_closed_sessions
-        print "non_tx_stats_created_count   ",  non_tx_stats_created_count
-        print "non_tx_stats_destroyed_count ",  non_tx_stats_destroyed_count
-        print "non_tx_stats_idle_sessions   ",  non_tx_stats_idle_sessions
-        print "non_tx_stats_returned_count  ",  non_tx_stats_returned_count
 
         urldata.close()
 
@@ -205,14 +172,16 @@ def get_apipoolstats(servers):
 
 def save_values(stats):
 
-    '''Write sums of all stats to file.'''
+    '''Write sums of stats to file.'''
 
     # Get timestamp
     now_time = time.strftime("%H:%M")
     now_date = time.strftime("%Y-%m-%d")
     time_stamp = now_date + " " + now_time
 
-    stats = str(stats).strip('()') + "\n" # convert integers to string and strip out ()
+    # convert integer to string and strip out ()
+    stats = str(stats).strip('()') + "\n"
+
     line = time_stamp + ", " + stats
     f = open(historyfile, 'a')
     f.write(line)
@@ -223,9 +192,9 @@ def save_values(stats):
 def tail_history(num_recs, selected_stat):
 
     '''
-    * Load entire file into list
-    * Split each line into separate list elements
-    * Put tail -n into new list
+    Load file into list.
+    Split each line by list element.
+    Put tail -n into new list.
     '''
 
     f = open(historyfile, 'r')
@@ -267,14 +236,16 @@ def tail_history(num_recs, selected_stat):
 
 
 def transmit_values(stat_values, target_widget):
-    '''Send data to Dashing server via http.'''
+    '''
+    Send data to Dashing server via http.
+    '''
 
     data = '{ "auth_token": "mingle#trip", "points":' + stat_values + '}'
 
-    ##
-    print "Data string\n", data
-    print "stat_values", stat_values
-    ##
+    # ##
+    # print "Data string\n", data
+    # print "stat_values", stat_values
+    # ##
 
     h = httplib.HTTPConnection('dashing.virginam.com:80')
 
@@ -297,10 +268,6 @@ def main():
     if not line.startswith('#'):
         f.write(HEADER + "\n")
     f.close
-
-    ##
-    ## Call functions
-    ##
 
     sum_stats = get_apipoolstats(servers)
     save_values(sum_stats)
@@ -330,4 +297,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
