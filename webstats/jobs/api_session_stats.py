@@ -203,8 +203,8 @@ def tail_history(num_recs, selected_stat):
     lines = lines.split('\n')
     lines_len = len(lines) - 1
 
-    print "\nNumber of lines in file: ", lines_len
-    print "Target stat to graph:", selected_stat
+    # print "\nNumber of lines in file: ", lines_len
+    # print "Target stat to graph:", selected_stat
     # print "\nAll recs:\n", lines
 
     # rec_slice = lines[1:5]
@@ -215,7 +215,7 @@ def tail_history(num_recs, selected_stat):
     # Make line selection from which to create json string
     lines_selected = lines[lines_start:lines_end]
     lines_selected_separated = '\n'.join(lines_selected) + '\n' # long listing
-    print lines_selected_separated
+    # print lines_selected_separated
     line_range = len(lines_selected)
 
     # Build JSON String
