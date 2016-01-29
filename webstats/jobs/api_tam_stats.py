@@ -179,11 +179,12 @@ def graph_points(values):
     return points
 
 
-def transmit_values(host, port, widget, token, data):
+def transmit_values(host, port, widget, token, data, num_recs):
     '''Send data to Dashing server via http'''
 
     post_data = '{ "auth_token": "' + token + '", "points": ' + data + '} '
     print "Transmitting to", host + ':' + port + '/widgets/' + widget
+    print "Data points: ", num_recs
     print "Data: ", data
 
     http = httplib.HTTPConnection(host, port)
@@ -224,7 +225,7 @@ def main():
     selected_values = tail_history(historyfile, num_recs, num_interval)
     points = graph_points(selected_values)
     transmit_values(dashing_host, dashing_http_port,
-                    target_widget, auth_token, points)
+                    target_widget, auth_token, points, num_recs)
 
 
 if __name__ == '__main__':
