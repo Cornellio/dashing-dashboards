@@ -4,7 +4,6 @@ Get api stats from all servers.
 Add stats together.
 Write sums of stats to file.
 Push stats to dashing widgets.
-
 TODO:
   - fix repeated value in last pair of json string
 '''
@@ -331,3 +330,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
