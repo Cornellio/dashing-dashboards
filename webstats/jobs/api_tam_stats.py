@@ -5,7 +5,6 @@ Dashing job for graphing Sabre TAM pool usage.
 Lookup current TAM pool usage from Sabre, save results to a file,
 then read historical values from file and post to a Dashing graph.
 '''
-# TODO: Fix repeated last value
 
 import sys
 import time
@@ -22,14 +21,13 @@ def return_args():
         'and send to Dashing server for display')
     parser.add_argument('-d', help='Dashing server to push data to',
                         required=False, dest='dashing_host',
-                        default='dashing.virginam.com')
+                        default='dashing.local')
     parser.add_argument('-w', help='Widget to send data to',
                         required=False, dest='widget',
                         default='sabresessions')
     parser.add_argument('-a', help='Authentication token '
                         'used by Dashing server',
-                        required=False, dest='authtoken',
-                        default="mingle#trip")
+                        required=True, dest='authtoken')
     parser.add_argument('--http_endpoint', help='HTTP endpoint from which to '
                         'lookup stats', required=True)
     parser.add_argument('-k', help='Sabre Login Key',
@@ -219,23 +217,6 @@ def main():
 
     check_file(historyfile, HEADER)
 
-    ##
-    print "\nUsing options:"
-    print "auth_token =>", auth_token
-    print "login_key =>", login_key
-    print "num_recs =>", num_recs
-    print "num_interval =>", num_interval
-    print "dashing_http_port =>", dashing_http_port
-    print "server_connection =>", (dashing_host + ':' + dashing_http_port +
-                                   '/widgets/' + target_widget)
-    print "historyfile =>", historyfile
-    print "header", HEADER
-
-    #
-    # Call functions
-    #
-
-    # To just graph historical values, don't lookup current value
     if skip_lookup is False:
         tam_usage = get_tam_usage(http_endpoint, login_key)
         save_tam_usage(historyfile, tam_usage)
