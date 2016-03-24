@@ -37,8 +37,10 @@ def parse_args():
                         required=False, dest='num_recs', default=12)
     parser.add_argument('-a', help='Authentication token for Dashing server',
                         required=False, dest='authtoken')
-    parser.add_argument('-u', help='Username for SSH connections.',
-                        required=False, dest='username', default="vajobs")
+    parser.add_argument('-l', help='login name used for remote ssh commands',
+                        required=True, dest='username')
+    parser.add_argument('-i', required=False, dest='identity_file',
+                        default="~/.ssh/id_dsa", help='ssh private key file')
     parser.add_argument('-f', help='Name of history file to write stats to',
                         required=False, dest='historyfile',
                         default=sys.argv[0].strip('py') + "history")
@@ -59,6 +61,7 @@ def parse_args():
     num_recs             = args.num_recs
     historyfile          = args.historyfile
     ssh_username         = args.username
+    ssh_identity_file    = args.identity_file
 
     return (auth_token,
         dashing_host,
@@ -67,10 +70,11 @@ def parse_args():
         num_recs,
         historyfile,
         servers,
-        ssh_username)
+        ssh_username,
+        ssh_identity_file)
 
 
-def get_http_connection_sum(servers, username):
+def get_http_connection_sum(servers, username, identity_file):
 
     '''
     Cycle through API servers,
@@ -89,7 +93,7 @@ def get_http_connection_sum(servers, username):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        privatekeyfile = os.path.expanduser('~/.ssh/id_dsa')
+        privatekeyfile = os.path.expanduser(identity_file)
         ssh_key = paramiko.DSSKey.from_private_key_file(privatekeyfile, password="")
 
         ssh.load_system_host_keys()
@@ -206,7 +210,8 @@ def main():
         num_recs,
         historyfile,
         servers,
-        ssh_username) = parse_args()
+        ssh_username,
+        ssh_identity_file) = parse_args()
 
     DATA_VIEW   = "points"
     historyfile = sys.argv[0].strip('py') + "history"
@@ -240,7 +245,7 @@ def main():
     # Call functions
     #
 
-    sum_http_established_cx = get_http_connection_sum(servers, ssh_username)
+    sum_http_established_cx = get_http_connection_sum(servers, ssh_username, ssh_identity_file)
     ##
     print sum_http_established_cx
     sys.exit(0)
