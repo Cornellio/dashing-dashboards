@@ -78,13 +78,13 @@ def get_http_connection_sum(servers, username):
     Return the sum.
     '''
 
-    print "servers nloop", servers[0]
+    print "servers nloop", servers
 
     cmd = 'netstat -tna | grep -i 80.*established'
 
     for server in servers:
         ##
-        print "server in loop: ", server, username
+        print "server, user in loop: ", server, username
         ##
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -95,9 +95,18 @@ def get_http_connection_sum(servers, username):
         ssh.load_system_host_keys()
         ssh.connect(server, username=username, key_filename=privatekeyfile, look_for_keys=False)
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
+
+        # Get output of remote ssh command
+        http_established_cx = []
+        for output in ssh_stdout:
+            # http_established_cx = ssh_stdout[6]
+            http_established_cx.append(output)
+
+        len_http_established_cx = len(http_established_cx)
         ssh.close()
 
-        print "ssh results: ", ssh_stdin, ssh_stdout, ssh_stderr
+        print len_http_established_cx
+
     sys.exit(0)
 
     return sum_http_established_cx
