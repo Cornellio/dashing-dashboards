@@ -1,4 +1,4 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 
 '''
 Push tam_usage_max to Meter widget on dashing server
@@ -13,23 +13,23 @@ import urllib2
 import httplib
 
 parser = argparse.ArgumentParser(
-                    description = 'Retrieve and push Sabre TAM usage '
+                    description='Retrieve and push Sabre TAM usage '
                     'max to Dashing server for display')
-parser.add_argument('-d', help ='Dashing server to push data to', 
-                    required = False, dest = 'dashing_host', 
-                    default = 'dashing.virginam.com')
-parser.add_argument('-w', help ='Widget to send data to',
-                    required = False, dest = 'widget', 
-                    default = 'tam_usage_max')
-parser.add_argument('-a', help = 'Authentication token '
+parser.add_argument('-d', help='Dashing server to push data to',
+                    required=False, dest='dashing_host',
+                    default='dashing.virginam.com')
+parser.add_argument('-w', help='Widget to send data to',
+                    required=False, dest='widget',
+                    default='tam_usage_max')
+parser.add_argument('-a', help='Authentication token '
                     'used by Dashing server',
-                    required = False, dest = 'authtoken', 
-                    default = "mingle#trip")
-parser.add_argument('-f', help ='Name of file to read stats from', 
-                    required = False, dest = 'historyfile', 
-                    default = "api_tam_stats.history")
-parser.add_argument('--version', help = 'Print version and exit', 
-                    required = False, action = 'store_true')
+                    required=False, dest='authtoken',
+                    default="mingle#trip")
+parser.add_argument('-f', help='Name of file to read stats from',
+                    required=False, dest='historyfile',
+                    default="api_tam_stats.history")
+parser.add_argument('--version', help='Print version and exit',
+                    required=False, action='store_true')
 
 __version__          = '0.0.1'
 __author__           = 'Pete Cornell'
@@ -42,8 +42,8 @@ DATA_VIEW            = "points"
 historyfile          = args.historyfile
 echo_version         = args.version
 dashing_http_port    = "80"
-server_connection    =  ( dashing_host + ':' + dashing_http_port + 
-                        '/widgets/' + target_widget )
+server_connection    =  ( dashing_host + ':' + dashing_http_port +
+                          '/widgets/' + target_widget)
 
 
 def tam_session_max(file):
@@ -72,10 +72,8 @@ def main():
     print "\nUsing options:", args
     ##
 
-    ##
-    ## Call functions
-    ##
-    
+    # Call functions
+
     max_value = tam_session_max(historyfile)
     print "max reading", max_value
     exit(0)
