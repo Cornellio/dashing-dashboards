@@ -74,6 +74,32 @@ def parse_args():
         ssh_identity_file)
 
 
+def get_http_connection_count(server, username, identity_file, cmd):
+    ##
+    print "server, user in loop: ", server, username
+    ##
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    privatekeyfile = os.path.expanduser(identity_file)
+    ssh_key = paramiko.DSSKey.from_private_key_file(privatekeyfile, password="")
+
+    ssh.load_system_host_keys()
+    ssh.connect(server, username=username, key_filename=privatekeyfile, look_for_keys=False)
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
+
+    # Get output of remote ssh command
+    http_established_cx = []
+    for output in ssh_stdout:
+        # http_established_cx = ssh_stdout[6]
+        http_established_cx.append(output)
+
+    len_http_established_cx = len(http_established_cx)
+    ssh.close()
+
+    return len_http_established_cx
+
+
 def get_http_connection_sum(servers, username, identity_file):
 
     '''
@@ -86,30 +112,13 @@ def get_http_connection_sum(servers, username, identity_file):
 
     cmd = 'netstat -tna | grep -i 80.*established'
 
+    # Create hash table containing servername : connection count
+    http_connections = {}
     for server in servers:
-        ##
-        print "server, user in loop: ", server, username
-        ##
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        established_cx = get_http_connection_count(server, username, identity_file, cmd)
+        http_connections[server] = established_cx
 
-        privatekeyfile = os.path.expanduser(identity_file)
-        ssh_key = paramiko.DSSKey.from_private_key_file(privatekeyfile, password="")
-
-        ssh.load_system_host_keys()
-        ssh.connect(server, username=username, key_filename=privatekeyfile, look_for_keys=False)
-        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
-
-        # Get output of remote ssh command
-        http_established_cx = []
-        for output in ssh_stdout:
-            # http_established_cx = ssh_stdout[6]
-            http_established_cx.append(output)
-
-        len_http_established_cx = len(http_established_cx)
-        ssh.close()
-
-        print len_http_established_cx
+    print "dict is", http_connections.items()
 
     sys.exit(0)
 
