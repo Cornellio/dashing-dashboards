@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 '''
 Get api stats from all servers.
 Add stats together.
@@ -20,7 +21,7 @@ parser = argparse.ArgumentParser(
                     'and send to Dashing server for display')
 parser.add_argument('-s', help ='API servers to collect stats from',
                     required = False, dest = 'servers',
-                    default = 'wwwapidev03-sc9 wwwapidev05-sc9')
+                    default = 'wwwapidev03-sc9 wwwapidev04-sc9')
 parser.add_argument('-d', help ='Dashing server to push data to',
                     required = False, dest = 'dashing_host',
                     default = 'dashing.virginam.com')
@@ -37,8 +38,7 @@ parser.add_argument('-n', help = 'Number of data points to '
                     required = False, dest = 'num_recs', default = 12)
 parser.add_argument('-a', help = 'Authentication token '
                     'used by Dashing server',
-                    required = False, dest = 'authtoken',
-                    default = "mingle#trip")
+                    required = True, dest = 'authtoken')
 parser.add_argument('-f', help ='Name of file to write stats to',
                     required = False, dest = 'historyfile',
                     default = sys.argv[0].strip('py') + "history")
@@ -202,10 +202,6 @@ def tail_history(num_recs, selected_stat):
     lines = f.read()
     lines = lines.split('\n')
     lines_len = len(lines) - 1
-
-    # print "\nNumber of lines in file: ", lines_len
-    # print "Target stat to graph:", selected_stat
-    # print "\nAll recs:\n", lines
 
     # rec_slice = lines[1:5]
     lines_start = ( int(lines_len) -1 ) - int(num_recs)
