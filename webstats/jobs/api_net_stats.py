@@ -108,21 +108,20 @@ def get_http_connection_sum(servers, username, identity_file):
     Return the sum.
     '''
 
-    print "servers nloop", servers
-
     cmd = 'netstat -tna | grep -i 80.*established'
 
-    # Create hash table containing servername : connection count
+    # Create dict containing servername : connection count
     http_connections = {}
     for server in servers:
         established_cx = get_http_connection_count(server, username, identity_file, cmd)
         http_connections[server] = established_cx
 
-    print "dict is", http_connections.items()
+    # Add all values from dict
+    http_connections_total = []
+    for val in http_connections.values():
+        http_connections_total.append(val)
 
-    sys.exit(0)
-
-    return sum_http_established_cx
+    return sum(http_connections_total)
 
 
 def save_values(stats):
