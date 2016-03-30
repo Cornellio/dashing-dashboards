@@ -41,7 +41,7 @@ def parse_args():
                         required=True, dest='username')
     parser.add_argument('-i', required=False, dest='identity_file',
                         default="~/.ssh/id_dsa", help='ssh private key file')
-    parser.add_argument('-f', help='Name of history file to write stats to',
+    parser.add_argument('-f', help='File where stat history is stored',
                         required=False, dest='historyfile',
                         default=sys.argv[0].strip('py') + "history")
     parser.add_argument('--environment', help='Dashing environment to use, '
@@ -100,7 +100,7 @@ def get_http_connection_count(server, username, identity_file, cmd):
     return len_http_established_cx
 
 
-def get_http_connection_sum(servers, username, identity_file):
+def get_sum_http_established_cx(servers, username, identity_file):
 
     '''
     Cycle through API servers,
@@ -124,9 +124,9 @@ def get_http_connection_sum(servers, username, identity_file):
     return sum(http_connections_total)
 
 
-def save_values(stats):
+def save_values(stats, file):
 
-    '''Write sums of all stats to file.'''
+    '''Write sums to file.'''
 
     # Get timestamp
     now_time = time.strftime("%H:%M")
@@ -136,9 +136,9 @@ def save_values(stats):
     # convert integers to string and strip out parens ()
     stats = str(stats).strip('()') + "\n"
     line = time_stamp + ", " + stats
-    f = open(historyfile, 'a')
+    f = open(file, 'a')
     f.write(line)
-    print "\nWriting new values: ", line
+    print "\nWriting value: ", line
     f.close
 
 
@@ -222,7 +222,6 @@ def main():
         ssh_identity_file) = parse_args()
 
     DATA_VIEW   = "points"
-    historyfile = sys.argv[0].strip('py') + "history"
 
     if dashing_env == "production": dashing_http_port = "80"
     if dashing_env == "development": dashing_http_port = "3030"
@@ -240,10 +239,8 @@ def main():
     print "historyfile", historyfile
     ##
 
+    # Create log file if it doesn't exist and write header
     HEADER = "# Time, Established Connections"
-
-    # Create/check output file for header and write it if needed
-
     with open(historyfile, 'r+') as f:
         line = f.readline()
         if not line.startswith('#'):
@@ -253,13 +250,13 @@ def main():
     # Call functions
     #
 
-    sum_http_established_cx = get_http_connection_sum(servers, ssh_username, ssh_identity_file)
+    sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file)
+    save_values(sum_http_established_cx, historyfile)
+
     ##
-    print sum_http_established_cx
     sys.exit(0)
     ##
 
-    save_values(sum_http_established_cx)
 
     stat_values = tail_history(num_recs, stat)
     transmit_values(stat_values, target_widget)
