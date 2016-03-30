@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument('-n', help='Number of data points to '
                         'send to Dashing server, This will be the nuber of '
                         'values shown on the x-axis of the graph',
-                        required=False, dest='num_recs', default=12)
+                        required=False, dest='num_recs', default=12, type=int)
     parser.add_argument('-a', help='Authentication token for Dashing server',
                         required=False, dest='authtoken')
     parser.add_argument('-l', help='login name used for remote ssh commands',
@@ -142,40 +142,32 @@ def save_values(stats, file):
     f.close
 
 
-def tail_history(num_recs, selected_stat):
+def tail_history(num_recs, historyfile):
 
     '''
     * Load entire file into list
-    * Split each line into separate list elements
-    * Put tail -n into new list
+    * Put value into list
+    * Return tail -n where n is num_recs
     '''
 
     f = open(historyfile, 'r')
 
     # skip header
     f.readline()
+    lines = f.read().split('\n')
+    # Drop empy value from end of list
+    lines.pop()
 
-    lines = f.read()
-    lines = lines.split('\n')
-    lines_len = len(lines) - 1
+    # Put 3rd element of each line and put into new list
+    value_list = [ value.split()[2] for value in lines ]
 
-    print "\nNumber of lines in file: ", lines_len
-    print "Target stat to graph:", selected_stat
-    # print "\nAll recs:\n", lines
+    # Return slice of the last num_recs
+    return value_list[-num_recs:]
 
-    # rec_slice = lines[1:5]
-    lines_start = (int(lines_len)-1) - int(num_recs)
-    lines_end = lines_len
-    # print lines_start, lines_end
+    f.close()
 
-    # Make line selection from which to create json string
-    lines_selected = lines[lines_start:lines_end]
-    line_range = len(lines_selected)
 
-    # Print long listing
-    lines_selected_separated = '\n'.join(lines_selected) + '\n'
-    print lines_selected_separated
-
+def build_json_values(values):
     # Build json string
     json_post_data = ''
     for line_no in xrange(1, line_range):
@@ -190,7 +182,6 @@ def tail_history(num_recs, selected_stat):
 
     print "Constructed JSON string, %s values: \n%s" % (str(num_recs), json_post_data)
     return json_post_data
-    f.close()
 
 
 def transmit_values(stat_values, target_widget):
@@ -252,7 +243,7 @@ def main():
 
     sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file)
     save_values(sum_http_established_cx, historyfile)
-
+    print tail_history(num_recs, historyfile)
     ##
     sys.exit(0)
     ##
