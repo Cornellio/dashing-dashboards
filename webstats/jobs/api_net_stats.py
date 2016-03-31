@@ -138,7 +138,6 @@ def save_values(stats, file):
     line = time_stamp + ", " + stats
     f = open(file, 'a')
     f.write(line)
-    print "\nWriting value: ", line
     f.close
 
 
@@ -168,19 +167,28 @@ def tail_history(num_recs, historyfile):
 
 
 def build_json_values(values):
+
+    lines_start = 0
+    lines_end = len(values)
+
+    # Make line selection from which to create json string
+    values_selected = values[lines_start:lines_end]
+    values_selected_separated = '\n'.join(values_selected) + '\n'
+    line_range = len(values_selected)
+
     # Build json string
     json_post_data = ''
-    for line_no in xrange(1, line_range):
-        json_post_segment = lines_selected[line_no].split(', ')[selected_stat]
+    for line_no in range(1, line_range):
+
+        json_post_segment = str(values_selected[line_no])
 
         if line_no == 1:
             json_post_data += '[ { "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' }, '
-        if line_no > 1 and line_no < len(lines_selected):
+        if line_no > 1 and line_no < len(values_selected):
             json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' }, '
         if line_no == line_range - 1:
             json_post_data += '{ "x": ' + str(line_no) + ', "y": ' + json_post_segment + ' } ]'
 
-    print "Constructed JSON string, %s values: \n%s" % (str(num_recs), json_post_data)
     return json_post_data
 
 
@@ -243,7 +251,8 @@ def main():
 
     sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file)
     save_values(sum_http_established_cx, historyfile)
-    print tail_history(num_recs, historyfile)
+    plot_values = tail_history(num_recs, historyfile)
+    print build_json_values(plot_values)
     ##
     sys.exit(0)
     ##
