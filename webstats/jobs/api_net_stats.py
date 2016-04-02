@@ -17,9 +17,12 @@ import paramiko
 import os
 
 
+def vprint(message, verbose):
+    if verbose:
+        print message
+
 def parse_args():
     '''Parse command line arguments'''
-
     parser = argparse.ArgumentParser(
                         description='Count open HTTP connections across '
                         'API server farm and send to Dashing server for display')
@@ -50,18 +53,21 @@ def parse_args():
                         'Development uses port 3030',
                         required=False, dest='dashing_env',
                         default="production")
+    parser.add_argument('-v', help='Verbose output', required=False,
+                        default=False, dest='verbose', action='store_true')
 
-    args                 = parser.parse_args()
-    auth_token           = args.authtoken
-    servers              = args.servers.split()
-    dashing_host         = args.dashing_host.strip('http://')
-    dashing_host         = "http://" + dashing_host
-    target_widget        = args.widget
-    dashing_env          = args.dashing_env
-    num_recs             = args.num_recs
-    historyfile          = args.historyfile
-    ssh_username         = args.username
-    ssh_identity_file    = args.identity_file
+    args               = parser.parse_args()
+    auth_token         = args.authtoken
+    servers            = args.servers.split()
+    dashing_host       = args.dashing_host.strip('http://')
+    dashing_host       = "http://" + dashing_host
+    target_widget      = args.widget
+    dashing_env        = args.dashing_env
+    num_recs           = args.num_recs
+    historyfile        = args.historyfile
+    ssh_username       = args.username
+    ssh_identity_file  = args.identity_file
+    verbose            = args.verbose
 
     return (auth_token,
         dashing_host,
@@ -71,13 +77,13 @@ def parse_args():
         historyfile,
         servers,
         ssh_username,
-        ssh_identity_file)
+        ssh_identity_file,
+        verbose)
 
 
-def get_http_connection_count(server, username, identity_file, cmd):
-    ##
-    print "server, user in loop: ", server, username
-    ##
+def get_http_connection_count(server, username, identity_file, cmd, v):
+
+
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -86,12 +92,13 @@ def get_http_connection_count(server, username, identity_file, cmd):
 
     ssh.load_system_host_keys()
     ssh.connect(server, username=username, key_filename=privatekeyfile, look_for_keys=False)
+    vprint('connected to: %s as %s' % (server, username), v)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
+    vprint('running remote command: %s' % (cmd), v)
 
     # Get output of remote ssh command
     http_established_cx = []
     for output in ssh_stdout:
-        # http_established_cx = ssh_stdout[6]
         http_established_cx.append(output)
 
     len_http_established_cx = len(http_established_cx)
@@ -100,7 +107,7 @@ def get_http_connection_count(server, username, identity_file, cmd):
     return len_http_established_cx
 
 
-def get_sum_http_established_cx(servers, username, identity_file):
+def get_sum_http_established_cx(servers, username, identity_file, v):
 
     '''
     Cycle through API servers,
@@ -110,10 +117,12 @@ def get_sum_http_established_cx(servers, username, identity_file):
 
     cmd = 'netstat -tna | grep -i 80.*established'
 
+    vprint('Starting connection attempt for hosts: %s' % (servers), v)
+
     # Create dict containing servername : connection count
     http_connections = {}
     for server in servers:
-        established_cx = get_http_connection_count(server, username, identity_file, cmd)
+        established_cx = get_http_connection_count(server, username, identity_file, cmd, v)
         http_connections[server] = established_cx
 
     # Add all values from dict
@@ -210,15 +219,9 @@ def transmit_values(stat_values, target_widget):
 
 def main():
 
-    (auth_token,
-        dashing_host,
-        target_widget,
-        dashing_env,
-        num_recs,
-        historyfile,
-        servers,
-        ssh_username,
-        ssh_identity_file) = parse_args()
+    (auth_token, dashing_host, target_widget, dashing_env,
+    num_recs, historyfile, servers, ssh_username,
+    ssh_identity_file, verbosity) = parse_args()
 
     DATA_VIEW   = "points"
 
@@ -249,13 +252,13 @@ def main():
     # Call functions
     #
 
-    sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file)
+    sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file, verbosity)
     save_values(sum_http_established_cx, historyfile)
     plot_values = tail_history(num_recs, historyfile)
     print build_json_values(plot_values)
     ##
-    sys.exit(0)
     ##
+    sys.exit(0)
 
 
     stat_values = tail_history(num_recs, stat)
