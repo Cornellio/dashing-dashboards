@@ -92,9 +92,9 @@ def get_http_connection_count(server, username, identity_file, cmd, v):
 
     ssh.load_system_host_keys()
     ssh.connect(server, username=username, key_filename=privatekeyfile, look_for_keys=False)
-    vprint('connected to: %s as %s' % (server, username), v)
+    vprint('Connect %s:' % (server), v)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
-    vprint('running remote command: %s' % (cmd), v)
+    vprint('Run remote command "%s"' % (cmd), v)
 
     # Get output of remote ssh command
     http_established_cx = []
@@ -117,7 +117,7 @@ def get_sum_http_established_cx(servers, username, identity_file, v):
 
     cmd = 'netstat -tna | grep -i 80.*established'
 
-    vprint('Starting connection attempt for hosts: %s' % (servers), v)
+    vprint('Attempting connection to hosts: %s' % (servers), v)
 
     # Create dict containing servername : connection count
     http_connections = {}
@@ -223,7 +223,7 @@ def main():
     num_recs, historyfile, servers, ssh_username,
     ssh_identity_file, verbosity) = parse_args()
 
-    DATA_VIEW   = "points"
+    data_view   = "points"
 
     if dashing_env == "production": dashing_http_port = "80"
     if dashing_env == "development": dashing_http_port = "3030"
@@ -231,26 +231,18 @@ def main():
     server_connection = (dashing_host + ':' +
                          dashing_http_port + '/widgets/' + target_widget)
 
-    ##
-    print "\nUsing options:"
-    print "auth_token: ", auth_token
-    print "dashing server connection: ", server_connection
-    print "dashing_http_port: ", dashing_http_port
-    print "servers in main: ", servers
-    print "num_recs: ", num_recs
-    print "historyfile", historyfile
-    ##
-
     # Create log file if it doesn't exist and write header
     HEADER = "# Time, Established Connections"
+    if not os.path.exists(historyfile):
+        open(historyfile, 'a').close()
     with open(historyfile, 'r+') as f:
         line = f.readline()
         if not line.startswith('#'):
             f.write(HEADER + "\n")
 
-    #
-    # Call functions
-    #
+    ##
+    ## Call functions
+    ##
 
     sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file, verbosity)
     save_values(sum_http_established_cx, historyfile)
