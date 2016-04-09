@@ -175,7 +175,7 @@ def tail_history(num_recs, historyfile):
     f.close()
 
 
-def build_json_values(values):
+def get_json_values(values):
 
     lines_start = 0
     lines_end = len(values)
@@ -223,13 +223,21 @@ def main():
     num_recs, historyfile, servers, ssh_username,
     ssh_identity_file, verbosity) = parse_args()
 
+    # msg collects strings for printing verbose output
+    msg = ''
     data_view   = "points"
 
-    if dashing_env == "production": dashing_http_port = "80"
-    if dashing_env == "development": dashing_http_port = "3030"
+    if dashing_env == "production":
+        dashing_http_port = "80"
+        msg += ("Running in dashing environment %s. Will send data via port %s." % (dashing_env, dashing_http_port))
+    if dashing_env == "development":
+        dashing_http_port = "3030"
+        msg += ("Running in dashing environment %s. Will send data via port %s." % (dashing_env, dashing_http_port))
 
     server_connection = (dashing_host + ':' +
                          dashing_http_port + '/widgets/' + target_widget)
+
+    msg += "\nServer connection string: %s" % (server_connection)
 
     # Create log file if it doesn't exist and write header
     HEADER = "# Time, Established Connections"
@@ -239,17 +247,19 @@ def main():
         line = f.readline()
         if not line.startswith('#'):
             f.write(HEADER + "\n")
+            msg += '\nCreating log file'
 
     ##
     ## Call functions
     ##
 
-    sum_http_established_cx = get_sum_http_established_cx(servers, ssh_username, ssh_identity_file, verbosity)
-    save_values(sum_http_established_cx, historyfile)
+    sum = (get_sum_http_established_cx(servers, ssh_username,
+           ssh_identity_file, verbosity))
+    save_values(sum, historyfile)
     plot_values = tail_history(num_recs, historyfile)
-    print build_json_values(plot_values)
-    ##
-    ##
+    msg += '\nAssembling values: ' + get_json_values(plot_values)
+
+    vprint(msg, verbosity)
     sys.exit(0)
 
 
