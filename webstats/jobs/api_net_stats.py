@@ -18,6 +18,7 @@ import os
 
 
 def vprint(message, verbose):
+    '''Print messages to stdout when verbose option is used'''
     if verbose:
         print message
 
@@ -83,6 +84,7 @@ def parse_args():
 
 def get_http_connection_count(server, username, identity_file, cmd, v):
 
+    '''Return number of established http connections for given server'''
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -135,7 +137,7 @@ def get_sum_http_established_cx(servers, username, identity_file, v):
 
 def save_values(stats, file):
 
-    '''Write sums to file.'''
+    '''Write sum of values to file'''
 
     # Get timestamp
     now_time = time.strftime("%H:%M")
@@ -177,6 +179,8 @@ def tail_history(num_recs, historyfile):
 
 def get_json_values(values):
 
+    '''Return json string of graph points'''
+
     lines_start = 0
     lines_end = len(values)
 
@@ -202,7 +206,8 @@ def get_json_values(values):
 
 
 def transmit_values(stat_values, target_widget):
-    '''Send data to Dashing server via http.'''
+
+    '''Send data to Dashing server via http'''
 
     data = '{ "auth_token": "auth_token", "points":' + stat_values + '}'
 
