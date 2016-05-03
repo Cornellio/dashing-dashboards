@@ -254,9 +254,6 @@ def main():
             f.write(HEADER + "\n")
             msg += '\nCreating log file'
 
-    ##
-    ## Call functions
-    ##
 
     sum = (get_sum_http_established_cx(servers, ssh_username,
            ssh_identity_file, verbosity))
