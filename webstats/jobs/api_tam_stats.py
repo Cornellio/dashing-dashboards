@@ -13,77 +13,6 @@ import urllib2
 import httplib
 
 
-def return_args():
-    '''Parse command line arguments'''
-
-    parser = argparse.ArgumentParser(
-        description='Retrieve and process Sabre TAM usage '
-        'and send to Dashing server for display')
-    parser.add_argument('-d', help='Dashing server to push data to',
-                        required=False, dest='dashing_host',
-                        default='dashing.local')
-    parser.add_argument('-w', help='Widget to send data to',
-                        required=False, dest='widget',
-                        default='sabresessions')
-    parser.add_argument('-a', help='Authentication token '
-                        'used by Dashing server',
-                        required=True, dest='authtoken')
-    parser.add_argument('--http_endpoint', help='HTTP endpoint from which to '
-                        'lookup stats', required=True)
-    parser.add_argument('-k', help='Sabre Login Key',
-                        required=False, dest='loginkey', default='tst_key')
-    parser.add_argument('-n', help='Number of data points to '
-                        'send to Dashing server, This will be the nuber of '
-                        'values shown on the x-axis of the graph',
-                        required=False, type=int, dest='num_recs', default=12)
-    parser.add_argument('-i', help='Interval of data points to '
-                        'plot, where this number represents how many records '
-                        'in history file to skip when plotting data points, '
-                        'Allows plotting intervals other than default 5 '
-                        'minute interval', required=False, type=int,
-                        dest='num_interval', default=1)
-    parser.add_argument('-x', '--skip_tam_lookup', help='Do not lookup '
-                        'current TAM usage from Sabre, just graph historical '
-                        'values', dest='skip_tam_lookup', required=False,
-                        action='store_true')
-    parser.add_argument('-f', help='Name of file to write stats to',
-                        required=False, dest='historyfile',
-                        default=sys.argv[0].strip('py') + "history")
-    parser.add_argument('-e', '--environment', help='Dashing environment '
-                        'to use, either "production" or "development", '
-                        'Defaults to production which uses port 80, '
-                        'Development uses port 3030',
-                        required=False, dest='dashing_env',
-                        default="production")
-    parser.add_argument('--version', help='Print version and exit',
-                        required=False, action='store_true')
-
-    args          = parser.parse_args()
-    auth_token    = args.authtoken
-    login_key     = args.loginkey
-    dashing_host  = args.dashing_host.strip('http://')
-    target_widget = args.widget
-    dashing_env   = args.dashing_env
-    num_recs      = args.num_recs
-    num_interval  = args.num_interval
-    DATA_VIEW     = "graph"
-    historyfile   = args.historyfile
-    http_endpoint = args.http_endpoint
-    skip_lookup   = args.skip_tam_lookup
-
-    return (auth_token,
-            login_key,
-            dashing_host,
-            target_widget,
-            dashing_env,
-            num_recs,
-            num_interval,
-            DATA_VIEW,
-            historyfile,
-            http_endpoint,
-            skip_lookup)
-
-
 def check_file(file, header):
     '''Create output file and write heater'''
 
@@ -194,6 +123,81 @@ def transmit_values(host, port, widget, token, data, num_recs):
     print response.read()
 
 
+def parse_args():
+    '''Parse command line arguments'''
+
+    parser = argparse.ArgumentParser(
+        description='Lookup Sabre TAM usage and send to Dashing server')
+
+    parser.add_argument('-d', help='Dashing server',
+                        required=False, dest='dashing_host',
+                        default='dashing.local')
+
+    parser.add_argument('-w', help='Widget to send data to',
+                        required=False, dest='widget', default='sabresessions')
+
+    parser.add_argument('-a', help='Dashing authentication token',
+                        required=True, dest='authtoken')
+
+    parser.add_argument('--http_endpoint', help='HTTP endpoint to pull Sabre\
+                        stats from', required=True)
+
+    parser.add_argument('-k', help='Sabre Login Key',
+                        required=False, dest='loginkey')
+
+    parser.add_argument('-n', help='Number of data points to\
+                        plot on x-axis of graph',
+                        required=False, type=int, dest='num_recs', default=12)
+
+    parser.add_argument('-i', help='Interval of data points to\
+                        plot, where this number represents how many records\
+                        in history file to skip when plotting data points',
+                        required=False, type=int,
+                        dest='num_interval', default=1)
+
+    parser.add_argument('-x', '--skip_tam_lookup', help='Do not lookup\
+                        current TAM usage from Sabre, just graph historical\
+                        values', dest='skip_tam_lookup', required=False,
+                        action='store_true')
+
+    parser.add_argument('-f', help='File to record stats to, defaults to the\
+                        name of this script without the .py extension',
+                        required=False, dest='historyfile',
+                        default=sys.argv[0].strip('py') + "history")
+
+    parser.add_argument('-e', '--environment', help='Dashing environment\
+                        to use, either "production" or "development,"\
+                        Defaults to production, port 80,\
+                        Development uses port 3030',
+                        required=False, dest='dashing_env',
+                        default="production")
+
+    args          = parser.parse_args()
+    auth_token    = args.authtoken
+    login_key     = args.loginkey
+    dashing_host  = args.dashing_host.strip('http://')
+    target_widget = args.widget
+    dashing_env   = args.dashing_env
+    num_recs      = args.num_recs
+    num_interval  = args.num_interval
+    DATA_VIEW     = "graph"
+    historyfile   = args.historyfile
+    http_endpoint = args.http_endpoint
+    skip_lookup   = args.skip_tam_lookup
+
+    return (auth_token,
+            login_key,
+            dashing_host,
+            target_widget,
+            dashing_env,
+            num_recs,
+            num_interval,
+            DATA_VIEW,
+            historyfile,
+            http_endpoint,
+            skip_lookup)
+
+
 def main():
 
     (auth_token,
@@ -206,7 +210,7 @@ def main():
         DATA_VIEW,
         historyfile,
         http_endpoint,
-        skip_lookup) = return_args()
+        skip_lookup) = parse_args()
 
     environment, dashing_http_port = set_environment(dashing_env)
 
