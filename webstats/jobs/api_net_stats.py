@@ -210,15 +210,18 @@ def get_json_values(values):
     return json_post_data
 
 
-def transmit_values(stat_values, target_widget):
+def transmit_values(values, auth_token, target_widget, v):
 
     '''Send data to Dashing server via http'''
 
-    data = '{ "auth_token": "auth_token", "points":' + stat_values + '}'
+    data = '{ "auth_token": "' + auth_token + '", "points":' + values + '}'
 
-    print "FOR JSON DATA\n", data
+    msg = ''
+    msg += "Assembling final json string: \n%s" % (str(data))
+    vprint(msg, v)
 
-    h = httplib.HTTPConnection('dashing.virginam.com:3030')
+
+    h = httplib.HTTPConnection('dashing.virginam.com:80')
 
     # u = urllib2.urlopen('http://dashing.virginam.com:3030', data)
 
@@ -226,6 +229,7 @@ def transmit_values(stat_values, target_widget):
     r = h.getresponse()
     print r.read()
 
+    sys.exit(0)
 
 def main():
 
@@ -261,15 +265,17 @@ def main():
 
     sum = (get_sum_http_established_cx(servers, ssh_username,
            ssh_identity_file, verbosity))
+
     save_values(sum, historyfile)
     plot_values = tail_history(num_recs, historyfile)
-    msg += '\nAssembling values: ' + get_json_values(plot_values)
+    msg += '\nAssembling values: \n' + get_json_values(plot_values)
 
     vprint(msg, verbosity)
-    sys.exit(0)
 
-    stat_values = tail_history(num_recs, stat)
-    transmit_values(stat_values, target_widget)
+    # stat_values = tail_history(num_recs, stat)
+    transmit_values(get_json_values(plot_values), auth_token, target_widget, verbosity)
+
+    # sys.exit(0)
 
 if __name__ == '__main__':
     main()
