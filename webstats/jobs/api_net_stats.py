@@ -22,11 +22,12 @@ def vprint(message, verbose):
     if verbose:
         print message
 
+
 def parse_args():
     '''Parse command line arguments'''
     parser = argparse.ArgumentParser(
-                        description='Count open HTTP connections across '
-                        'API server farm and send to Dashing server for display')
+        description='Count open HTTP connections across '
+        'API server farm and send to Dashing server for display')
     parser.add_argument('-s', help='API servers to collect stats from',
                         required=False, dest='servers')
     parser.add_argument('-d', help='Dashing server to push data to',
@@ -71,15 +72,15 @@ def parse_args():
     verbose            = args.verbose
 
     return (auth_token,
-        dashing_host,
-        target_widget,
-        dashing_env,
-        num_recs,
-        historyfile,
-        servers,
-        ssh_username,
-        ssh_identity_file,
-        verbose)
+            dashing_host,
+            target_widget,
+            dashing_env,
+            num_recs,
+            historyfile,
+            servers,
+            ssh_username,
+            ssh_identity_file,
+            verbose)
 
 
 def get_http_connection_count(server, username, identity_file, cmd, v):
@@ -93,7 +94,8 @@ def get_http_connection_count(server, username, identity_file, cmd, v):
     ssh_key = paramiko.DSSKey.from_private_key_file(privatekeyfile, password="")
 
     ssh.load_system_host_keys()
-    ssh.connect(server, username=username, key_filename=privatekeyfile, look_for_keys=False)
+    ssh.connect(server, username=username, key_filename=privatekeyfile,
+                look_for_keys=False)
     vprint('Connect %s:' % (server), v)
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
     vprint('Run remote command "%s"' % (cmd), v)
@@ -124,7 +126,10 @@ def get_sum_http_established_cx(servers, username, identity_file, v):
     # Create dict containing servername : connection count
     http_connections = {}
     for server in servers:
-        established_cx = get_http_connection_count(server, username, identity_file, cmd, v)
+        established_cx = get_http_connection_count(server,
+                                                   username,
+                                                   identity_file,
+                                                   cmd, v)
         http_connections[server] = established_cx
 
     # Add all values from dict
@@ -169,7 +174,7 @@ def tail_history(num_recs, historyfile):
     lines.pop()
 
     # Put 3rd element of each line and put into new list
-    value_list = [ value.split()[2] for value in lines ]
+    value_list = [value.split()[2] for value in lines]
 
     # Return slice of the last num_recs
     return value_list[-num_recs:]
@@ -225,8 +230,8 @@ def transmit_values(stat_values, target_widget):
 def main():
 
     (auth_token, dashing_host, target_widget, dashing_env,
-    num_recs, historyfile, servers, ssh_username,
-    ssh_identity_file, verbosity) = parse_args()
+        num_recs, historyfile, servers, ssh_username,
+        ssh_identity_file, verbosity) = parse_args()
 
     # msg collects strings for printing verbose output
     msg = ''
@@ -254,7 +259,6 @@ def main():
             f.write(HEADER + "\n")
             msg += '\nCreating log file'
 
-
     sum = (get_sum_http_established_cx(servers, ssh_username,
            ssh_identity_file, verbosity))
     save_values(sum, historyfile)
@@ -263,7 +267,6 @@ def main():
 
     vprint(msg, verbosity)
     sys.exit(0)
-
 
     stat_values = tail_history(num_recs, stat)
     transmit_values(stat_values, target_widget)
