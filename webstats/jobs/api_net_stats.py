@@ -220,7 +220,6 @@ def transmit_values(values, auth_token, target_widget, v):
     msg += "Assembling final json string: \n%s" % (str(data))
     vprint(msg, v)
 
-
     h = httplib.HTTPConnection('dashing.virginam.com:80')
 
     # u = urllib2.urlopen('http://dashing.virginam.com:3030', data)
@@ -230,6 +229,7 @@ def transmit_values(values, auth_token, target_widget, v):
     print r.read()
 
     sys.exit(0)
+
 
 def main():
 
@@ -273,7 +273,8 @@ def main():
     vprint(msg, verbosity)
 
     # stat_values = tail_history(num_recs, stat)
-    transmit_values(get_json_values(plot_values), auth_token, target_widget, verbosity)
+    transmit_values(get_json_values(plot_values), auth_token,
+                    target_widget, verbosity)
 
     # sys.exit(0)
 
