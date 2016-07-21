@@ -62,7 +62,6 @@ def parse_args():
     auth_token         = args.authtoken
     servers            = args.servers.split()
     dashing_host       = args.dashing_host.strip('http://')
-    dashing_host       = "http://" + dashing_host
     target_widget      = args.widget
     dashing_env        = args.dashing_env
     num_recs           = args.num_recs
@@ -210,25 +209,25 @@ def get_json_values(values):
     return json_post_data
 
 
-def transmit_values(values, auth_token, target_widget, v):
+def transmit_values(values, auth_token, target_widget, host, port, v):
 
     '''Send data to Dashing server via http'''
 
     data = '{ "auth_token": "' + auth_token + '", "points":' + values + '}'
 
     msg = ''
-    msg += "Assembling final json string: \n%s" % (str(data))
+    msg += "Will use dashing host %s:%s\n" % (host, port)
+    msg += "Assembling final json string: \n%s" % (data)
     vprint(msg, v)
 
-    h = httplib.HTTPConnection('dashing.virginam.com:80')
+    host_connection = host + ':' + port
 
-    # u = urllib2.urlopen('http://dashing.virginam.com:3030', data)
-
-    h.request('POST', '/widgets/' + target_widget, data)
-    r = h.getresponse()
-    print r.read()
-
-    sys.exit(0)
+    try:
+        http = httplib.HTTPConnection(host_connection)
+        http.request('POST', '/widgets/' + target_widget, data)
+    except Exception as e:
+        print "Cannot connect to %s" % (host_connection)
+        raise IOError
 
 
 def main():
@@ -274,7 +273,7 @@ def main():
 
     # stat_values = tail_history(num_recs, stat)
     transmit_values(get_json_values(plot_values), auth_token,
-                    target_widget, verbosity)
+                    target_widget, dashing_host, dashing_http_port, verbosity)
 
     # sys.exit(0)
 
