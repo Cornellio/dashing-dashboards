@@ -84,7 +84,7 @@ def parse_args():
 
 def get_http_connection_count(server, username, identity_file, cmd, v):
 
-    '''Return number of established http connections for given server'''
+    '''Return number of established http connections for given servers'''
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -242,10 +242,13 @@ def main():
 
     if dashing_env == "production":
         dashing_http_port = "80"
-        msg += ("Running in dashing environment %s. Will send data via port %s." % (dashing_env, dashing_http_port))
+        msg += ("Running in dashing environment %s. Will send data via port "
+                "%s." % (dashing_env, dashing_http_port))
+
     if dashing_env == "development":
         dashing_http_port = "3030"
-        msg += ("Running in dashing environment %s. Will send data via port %s." % (dashing_env, dashing_http_port))
+        msg += ("Running in dashing environment %s. Will send data via port "
+                "%s." % (dashing_env, dashing_http_port))
 
     server_connection = (dashing_host + ':' +
                          dashing_http_port + '/widgets/' + target_widget)
