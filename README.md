@@ -36,7 +36,7 @@ Here's a brief description of each job:
 `api_net_stats.py` - Collect net stats.
 
 Example usage:
-./api_net_stats.py -s 'wwwapi02-sc9 wwwapi03-sc9 wwwapi05-sc9 wwwapi06-sc9' -d dashing.virginam.com -w apinetstats
+./api_net_stats.py -s 'webapi01 webapi02 webapi03' -d dashinghost.internal -w apinetstats
 
 
 Reference
